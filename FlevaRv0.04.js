@@ -112,6 +112,7 @@ function FlevaR(_div = document.body, _options = {}) {
 
     const __keyslist = {};
     const __setKeyDown = function (_event) {
+        _event.preventDefault();
         __keyslist['code_' + _event.keyCode] = true;
         __keyslist['name_' + _event.key.toLowerCase()] = true;
     }
@@ -1893,9 +1894,9 @@ function FlevaR(_div = document.body, _options = {}) {
     const __load = function () {
         __screen.div.addEventListener('contextmenu', __cancelContextMenu);
         __screen.div.addEventListener('mousemove', __setMousePosition, false);
-        __screen.div.addEventListener('mousedown', __setMouseDown, false);
+        __screen.div.addEventListener('mousedown', __setMouseDown, true);
         __screen.div.addEventListener('mouseup', __setMouseUp, false);
-        __screen.div.addEventListener("keydown", __setKeyDown, false);
+        __screen.div.addEventListener("keydown", __setKeyDown, true);
         __screen.div.addEventListener("keyup", __setKeyUp, false);
         __screen.div.onselectstart = function () { return false; }
 

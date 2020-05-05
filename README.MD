@@ -6,7 +6,7 @@ Include FlevaR to your website with the CDN:
 <script src="https://cdn.jsdelivr.net/gh/danidre14/FlevaR/FlevaRv{version}.js"></script>
 ```
 
-# [Versions](../blob/master/versions/index.md):
+# [Versions](../../blob/master/versions/index.md):
 ## Latest
 ### 0.06-
 - Coming soon.

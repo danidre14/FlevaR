@@ -31,7 +31,7 @@ function FlevaR(_div = document.body, _options = {}) {
     __config = {
         DEBUG: _options.debug
     }
-
+    
     const state = {};
     let __pixelResolution = _options.hitAccuracy || 10;
     let __renderFunction = null;
@@ -58,8 +58,8 @@ function FlevaR(_div = document.body, _options = {}) {
     }
     const __setMouseDown = function (_event) {
         __setMousePosition(_event);
-
-
+        
+        
         if (_event.button === 0) {
             if (__mouseList._left === undefined) __mouseList._left = true;
             if (__mousePressed._left === undefined) __mousePressed._left = true;
@@ -279,7 +279,7 @@ function FlevaR(_div = document.body, _options = {}) {
         if (_div == null) _div = document.body;
         const [__width, __height] = [__defaults.stage._width, __defaults.stage._height];
 
-
+        
         const canvasdiv = document.createElement('div');
         canvasdiv.setAttribute("style", `border-style: solid; border-width: 2px; width: ${__width}px; height: ${__height}px; position: relative;`);
         canvasdiv.style.overflow = "hidden";
@@ -287,7 +287,7 @@ function FlevaR(_div = document.body, _options = {}) {
         canvasdiv.style.border = 'none';
         canvasdiv.tabIndex = "0";
 
-
+        
         const canvas = document.createElement('canvas');
         canvas.setAttribute("style", "position: absolute;");
         canvas.width = __width;
@@ -308,7 +308,7 @@ function FlevaR(_div = document.body, _options = {}) {
             }
         });
 
-
+        
         canvasdiv.appendChild(canvas);
         _div.appendChild(canvasdiv);
 
@@ -376,7 +376,7 @@ function FlevaR(_div = document.body, _options = {}) {
                 for (const arg of Object.keys(args))
                     this[arg] = args[arg];
         },
-        Script: function Script() { },
+        Script: function Script() {  },
         Sprite: function Sprite() {
             for (const args of arguments)
                 for (const arg of Object.keys(args))
@@ -387,12 +387,12 @@ function FlevaR(_div = document.body, _options = {}) {
                 for (const arg of Object.keys(args))
                     this[arg] = args[arg];
         }
-
-
-
-
-
-
+        
+        
+        
+        
+        
+        
     }
     const __commandUtils = {
         print: console.log.bind(window.console),
@@ -449,7 +449,7 @@ function FlevaR(_div = document.body, _options = {}) {
                         continue;
                     };
 
-
+                    
                     if (pixel1[3] > 5 && pixel2[3] > 5) {
                         return true;
                     }
@@ -459,10 +459,10 @@ function FlevaR(_div = document.body, _options = {}) {
             return false;
         },
         pixelHitTestPoint: function (_source, _point) {
-
-
-
-
+            
+            
+            
+            
 
 
 
@@ -634,7 +634,7 @@ function FlevaR(_div = document.body, _options = {}) {
         step() {
             let drift = Date.now() - this.expected;
             if (drift > this.interval) {
-
+                
                 if (this.errorFunc) this.errorFunc();
             }
             this.workFunc();
@@ -728,14 +728,14 @@ function FlevaR(_div = document.body, _options = {}) {
         return _script;
     }
     const __Scene = function (_init) {
-
+        
         const state = {};
         let __renderFunction = null;
         let isLoaded = false;
 
         const __callRenderFunction = () => {
             if (helperUtils.isFunction(__renderFunction)) {
-
+                
                 for (const _name of Object.keys(__properties.layers)) {
                     __properties.layers[_name].hidden = true;
                 }
@@ -758,7 +758,7 @@ function FlevaR(_div = document.body, _options = {}) {
         }
 
 
-
+        
         const changeState = (_name, _value) => {
             const _newState = {};
             _newState[_name] = _value;
@@ -766,7 +766,7 @@ function FlevaR(_div = document.body, _options = {}) {
             __fillState(_newState);
             __callRenderFunction();
         }
-        const useState = (_objOrFunc) => {
+        const useState = (_objOrFunc) => { 
             if (helperUtils.isObject(_objOrFunc)) {
                 const _newState = _objOrFunc;
 
@@ -782,7 +782,7 @@ function FlevaR(_div = document.body, _options = {}) {
                 __callRenderFunction();
             }
         }
-        const setState = (_objOrFunc) => {
+        const setState = (_objOrFunc) => { 
             if (helperUtils.isObject(_objOrFunc)) {
                 const _newState = _objOrFunc;
 
@@ -869,12 +869,12 @@ function FlevaR(_div = document.body, _options = {}) {
                 _init(____thisObj, ____engine);
             }
 
-
+            
             for (const _name of Object.keys(__properties.prefabs)) {
                 __properties.prefabs[_name].prefab.load();
             }
 
-
+            
             for (const _name of Object.keys(__properties.layers)) {
                 __properties.layers[_name].layer.load();
             }
@@ -884,7 +884,7 @@ function FlevaR(_div = document.body, _options = {}) {
         }
         const unload = () => {
             if (!isLoaded) return;
-
+            
             for (const _name of Object.keys(__properties.prefabs)) {
                 if (!__properties.prefabs[_name].preserve) {
                     __properties.prefabs[_name].prefab.unload();
@@ -893,7 +893,7 @@ function FlevaR(_div = document.body, _options = {}) {
             }
             __prefabCount = 0;
 
-
+            
             for (const _name of Object.keys(__properties.layers)) {
                 if (!__properties.layers[_name].preserve) {
                     __properties.layers[_name].layer.unload();
@@ -901,59 +901,59 @@ function FlevaR(_div = document.body, _options = {}) {
                 }
             }
 
-
+            
             __properties.scripts.length = 0;
 
             isLoaded = false;
         }
 
         const tick = function () {
-
+            
             __properties.scripts.forEach(_script => {
                 _script(____thisObj, ____engine);
             });
 
-
+            
             for (const _name of Object.keys(__properties.prefabs)) {
                 if (helperUtils.isDefined(__properties.prefabs[_name])) __properties.prefabs[_name].prefab.tick();
             }
 
-
+            
             for (const _name of Object.keys(__properties.layers)) {
                 if (helperUtils.isDefined(__properties.layers[_name])) __properties.layers[_name].layer.tick();
             }
 
         }
         const render = function () {
-
+            
             for (const _name of Object.keys(__properties.prefabs)) {
                 __properties.prefabs[_name].prefab.render();
             }
 
-
+            
             for (const _name of Object.keys(__properties.layers)) {
                 if (!__properties.layers[_name].hidden)
                     __properties.layers[_name].layer.render();
             }
         }
         const start = function () {
-
+            
             for (const _name of Object.keys(__properties.prefabs)) {
                 __properties.prefabs[_name].prefab.start();
             }
 
-
+            
             for (const _name of Object.keys(__properties.layers)) {
                 __properties.layers[_name].layer.start();
             }
         }
         const stop = function () {
-
+            
             for (const _name of Object.keys(__properties.prefabs)) {
                 __properties.prefabs[_name].prefab.stop();
             }
 
-
+            
             for (const _name of Object.keys(__properties.layers)) {
                 __properties.layers[_name].layer.stop();
             }
@@ -970,13 +970,13 @@ function FlevaR(_div = document.body, _options = {}) {
 
         const ___unsafe = {
             ___getPrefabFromInstanceName: (_instanceName) => {
-
+                
                 for (const _name of Object.keys(__properties.prefabs)) {
                     if (__properties.prefabs[_name].instanceName === _instanceName) {
                         return __properties.prefabs[_name].prefab;
                     }
                 }
-
+                
                 for (const _name of Object.keys(__properties.layers)) {
                     if (!__properties.layers[_name].hidden) {
                         const prefab = __properties.layers[_name].layer.___unsafe.___getPrefabFromInstanceName(_instanceName);
@@ -1014,7 +1014,7 @@ function FlevaR(_div = document.body, _options = {}) {
     }
 
     const __Layer = function (_init) {
-
+        
         const state = {};
         let __renderFunction = null;
         let isLoaded = false;
@@ -1040,7 +1040,7 @@ function FlevaR(_div = document.body, _options = {}) {
         }
 
 
-
+        
         const changeState = (_name, _value) => {
             const _newState = {};
             _newState[_name] = _value;
@@ -1048,7 +1048,7 @@ function FlevaR(_div = document.body, _options = {}) {
             __fillState(_newState);
             __callRenderFunction();
         }
-        const useState = (_objOrFunc) => {
+        const useState = (_objOrFunc) => { 
             if (helperUtils.isObject(_objOrFunc)) {
                 const _newState = _objOrFunc;
 
@@ -1064,7 +1064,7 @@ function FlevaR(_div = document.body, _options = {}) {
                 __callRenderFunction();
             }
         }
-        const setState = (_objOrFunc) => {
+        const setState = (_objOrFunc) => { 
             if (helperUtils.isObject(_objOrFunc)) {
                 const _newState = _objOrFunc;
 
@@ -1117,7 +1117,7 @@ function FlevaR(_div = document.body, _options = {}) {
                 _init(____thisObj, ____engine);
             }
 
-
+            
             for (const _name of Object.keys(__properties.prefabs)) {
                 __properties.prefabs[_name].prefab.load();
             }
@@ -1127,46 +1127,46 @@ function FlevaR(_div = document.body, _options = {}) {
 
         const unload = () => {
             if (!isLoaded) return;
-
+            
             for (const _name of Object.keys(__properties.prefabs)) {
                 __properties.prefabs[_name].prefab.unload();
                 delete __properties.prefabs[_name];
             }
             __prefabCount = 0;
 
-
+            
             __properties.scripts.length = 0;
 
             isLoaded = false;
         }
 
         const tick = function () {
-
+            
             __properties.scripts.forEach(_script => {
                 _script(____thisObj, ____engine);
             });
 
-
+            
             for (const _name of Object.keys(__properties.prefabs)) {
                 if (helperUtils.isDefined(__properties.prefabs[_name])) __properties.prefabs[_name].prefab.tick();
             }
 
         }
         const render = function () {
-
+            
             for (const _name of Object.keys(__properties.prefabs)) {
                 __properties.prefabs[_name].prefab.render();
             }
         }
 
         const start = function () {
-
+            
             for (const _name of Object.keys(__properties.prefabs)) {
                 __properties.prefabs[_name].prefab.start();
             }
         }
         const stop = function () {
-
+            
             for (const _name of Object.keys(__properties.prefabs)) {
                 __properties.prefabs[_name].prefab.stop();
             }
@@ -1180,7 +1180,7 @@ function FlevaR(_div = document.body, _options = {}) {
 
         const ___unsafe = {
             ___getPrefabFromInstanceName: (_instanceName) => {
-
+                
                 for (const _name of Object.keys(__properties.prefabs)) {
                     if (__properties.prefabs[_name].instanceName === _instanceName) {
                         return __properties.prefabs[_name].prefab;
@@ -1217,7 +1217,7 @@ function FlevaR(_div = document.body, _options = {}) {
         return ____returns;
     }
     const __Prefab = function (_props = { _x: 0, _y: 0, _width: 50, _height: 50, _alpha: 1, _visible: true }, _init, _forceLoad) {
-
+        
         const state = {}, props = { _x: 0, _y: 0, _width: 50, _height: 50, _alpha: 1, _visible: true };
         let __renderFunction = null;
         let isLoaded = false;
@@ -1255,7 +1255,7 @@ function FlevaR(_div = document.body, _options = {}) {
                 delete state[_name];
             }
         }
-
+        
         const changeState = (_name, _value) => {
             const _newState = {};
             _newState[_name] = _value;
@@ -1263,7 +1263,7 @@ function FlevaR(_div = document.body, _options = {}) {
             __fillState(_newState);
             __callRenderFunction();
         }
-        const useState = (_objOrFunc) => {
+        const useState = (_objOrFunc) => { 
             if (helperUtils.isObject(_objOrFunc)) {
                 const _newState = _objOrFunc;
 
@@ -1279,7 +1279,7 @@ function FlevaR(_div = document.body, _options = {}) {
                 __callRenderFunction();
             }
         }
-        const setState = (_objOrFunc) => {
+        const setState = (_objOrFunc) => { 
             if (helperUtils.isObject(_objOrFunc)) {
                 const _newState = _objOrFunc;
 
@@ -1334,29 +1334,29 @@ function FlevaR(_div = document.body, _options = {}) {
             const sourceProps = props;
             const targetProps = prefab.___unsafe.___pullOutProps();
             if (!sourceProps._visible || !targetProps._visible) return false;
-
+            
             const source = { ...sourceProps };
             const target = { ...targetProps };
             if (__commandUtils.boxHitTest(source, target)) {
                 return true;
             }
+            
+            
+            
+            
+            
 
+            
+            
+            
+            
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+            
+            
+            
+            
+            
+            
 
             return false;
         }
@@ -1429,10 +1429,10 @@ function FlevaR(_div = document.body, _options = {}) {
         }
         const unload = () => {
             if (!isLoaded) return;
-
+            
             __resetSpriteSheet();
 
-
+            
             __properties.scripts.length = 0;
             isLoaded = false;
         }
@@ -1488,12 +1488,12 @@ function FlevaR(_div = document.body, _options = {}) {
             start,
             stop
         });
-
-
-
-
-
-
+        
+        
+        
+        
+        
+        
         Object.defineProperty(____returns, "_sprite", {
             get: function () { return __properties.graphic.name },
             enumerable: false,
@@ -1544,9 +1544,9 @@ function FlevaR(_div = document.body, _options = {}) {
                     ctx.clearRect(0, 0, w, h);
                     ctx.drawImage(scanvas, 0, 0, w, h, 0, 0, w, h);
 
-
+                    
                     const img = await __turnCanvasToImage(canvas);
-
+                    
                     const pixelMapData = __turnCanvasToPixelData(canvas, ctx);
 
                     const returns = new __constructors.Sprite({
@@ -1566,9 +1566,9 @@ function FlevaR(_div = document.body, _options = {}) {
                         ctx.clearRect(0, 0, w, h);
                         ctx.drawImage(scanvas, sW, 0, w, h, 0, 0, w, h);
 
-
+                        
                         const img = await __turnCanvasToImage(canvas);
-
+                        
                         const pixelMapData = __turnCanvasToPixelData(canvas, ctx);
 
                         const returns = new __constructors.Sprite({
@@ -1669,10 +1669,10 @@ function FlevaR(_div = document.body, _options = {}) {
                 _definition(ctx, ____engine);
             }
 
-
+            
             const img = await __turnCanvasToImage(canvas);
 
-
+            
             const pixelMapData = __turnCanvasToPixelData(canvas, ctx);
 
             const ___returns = new __constructors.Sprite({
@@ -1693,13 +1693,13 @@ function FlevaR(_div = document.body, _options = {}) {
         return __library.prefabs[_name];
     }
     const __getPrefabFromInstanceName = (_instanceName) => {
-
+        
         if (properties.scene !== "") {
             const prefab = __library.scenes[properties.scene].___unsafe.___getPrefabFromInstanceName(_instanceName);
             if (prefab) return prefab;
         }
 
-
+        
         for (const _name of Object.keys(__attachedPrefabs)) {
             if (__attachedPrefabs[_name].instanceName === _instanceName) {
                 return __attachedPrefabs[_name].prefab;
@@ -1719,7 +1719,7 @@ function FlevaR(_div = document.body, _options = {}) {
     }
 
 
-
+    
     const changeState = (_name, _value) => {
         const _newState = {};
         _newState[_name] = _value;
@@ -1727,7 +1727,7 @@ function FlevaR(_div = document.body, _options = {}) {
         __fillState(_newState);
         __callRenderFunction();
     }
-    const useState = (_objOrFunc) => {
+    const useState = (_objOrFunc) => { 
         if (helperUtils.isObject(_objOrFunc)) {
             const _newState = _objOrFunc;
 
@@ -1743,7 +1743,7 @@ function FlevaR(_div = document.body, _options = {}) {
             __callRenderFunction();
         }
     }
-    const setState = (_objOrFunc) => {
+    const setState = (_objOrFunc) => { 
         if (helperUtils.isObject(_objOrFunc)) {
             const _newState = _objOrFunc;
 
@@ -1797,10 +1797,12 @@ function FlevaR(_div = document.body, _options = {}) {
                 return _obj;
 
             let _temp;
-
-
+            
+            
             _temp = new _obj.constructor();
-            for (let _key in _obj) {
+            for (let _key in _obj)
+            
+            {
                 if (_obj.hasOwnProperty(_key)) {
                     if (Object.getOwnPropertyDescriptor(_obj, _key).value instanceof Object) {
                         _temp[_key] = this.clone(_obj[_key]);
@@ -1861,7 +1863,7 @@ function FlevaR(_div = document.body, _options = {}) {
             let result;
             let random = Math.random();
             if (_a !== null && typeof _a === "object") {
-
+                
                 if (helperUtils.isArray(_a)) {
                     if (_b === 1)
                         result = _a[this.random(_a.length - 1)];
@@ -1869,7 +1871,7 @@ function FlevaR(_div = document.body, _options = {}) {
                         result = cloneObject(_a).sort(function () {
                             return random > .5 ? -1 : 1;
                         });
-                } else if (helperUtils.isObject(_a)) {
+                } else if (helperUtils.isObject(_a)) { 
                     const keys = Object.keys(_a);
                     const key = keys[keys.length * Math.random() << 0];
                     if (_b === 1)
@@ -1878,7 +1880,7 @@ function FlevaR(_div = document.body, _options = {}) {
                         return _a[key];
                 }
             } else if (typeof _a === "string") {
-
+                
                 if (_b === 1)
                     result = _a.split("")[this.random(_a.length - 1)];
                 else
@@ -1886,16 +1888,16 @@ function FlevaR(_div = document.body, _options = {}) {
                         return random > .5 ? -1 : 1;
                     }).join("");
             } else if (typeof _a === "number") {
-
+                
                 if (typeof _b === "number") {
-
+                    
                     result = Math.round(random * (_b - _a)) + _a;
                 } else {
-
+                    
                     result = Math.round(random * _a);
                 }
             } else {
-
+                
                 result = random;
             }
             return result;
@@ -2016,42 +2018,47 @@ function FlevaR(_div = document.body, _options = {}) {
         let __loadToQueue = null;
         let onLoad = null;
         let __loaderState = "false";
-        const __loaderQueueAsync = [];
-        const __loaderQueueSync = [];
+        const __loaderQueue = [];
         const __loaderObj = {
             createSprite: function () {
-                __loaderQueueAsync.push({
-                    type: "sprite",
+                __loaderQueue.push({
+                    type: "async",
+                    code: "sprite",
                     args: [...arguments]
                 });
             },
             createSpriteSheet: function () {
-                __loaderQueueAsync.push({
-                    type: "spritesheet",
+                __loaderQueue.push({
+                    type: "async",
+                    code: "spritesheet",
                     args: [...arguments]
                 });
             },
             createPrefab: function () {
-                __loaderQueueSync.push({
-                    type: "prefab",
+                __loaderQueue.push({
+                    type: "sync",
+                    code: "prefab",
                     args: [...arguments]
                 });
             },
             createScript: function () {
-                __loaderQueueSync.push({
-                    type: "script",
+                __loaderQueue.push({
+                    type: "sync",
+                    code: "script",
                     args: [...arguments]
                 });
             },
             createLayer: function () {
-                __loaderQueueSync.push({
-                    type: "layer",
+                __loaderQueue.push({
+                    type: "sync",
+                    code: "layer",
                     args: [...arguments]
                 });
             },
             createScene: function () {
-                __loaderQueueSync.push({
-                    type: "scene",
+                __loaderQueue.push({
+                    type: "sync",
+                    code: "scene",
                     args: [...arguments]
                 });
             }
@@ -2061,23 +2068,18 @@ function FlevaR(_div = document.body, _options = {}) {
             __simulateLoad.drawLoadBar(__screen.ctx, percent);
         }
         const __loadFromQueue = async () => {
-            const loadCount = __loaderQueueAsync.length - 1;
-            __loadPercentInc(0, loadCount);
-            for (const _id of Object.keys(__loaderQueueAsync)) {
-                const args = __loaderQueueAsync[_id].args;
-                switch (__loaderQueueAsync[_id].type) {
+            const loadCount = __loaderQueue.filter(_val => _val.type === "async").length;
+            let loadCounter = 0;
+            __loadPercentInc(loadCounter, loadCount);
+            for (const _id of Object.keys(__loaderQueue)) {
+                const args = __loaderQueue[_id].args;
+                switch (__loaderQueue[_id].code) {
                     case "sprite":
                         await createSprite(...args);
                         break;
                     case "spritesheet":
                         await createSpriteSheet(...args);
                         break;
-                }
-                __loadPercentInc(_id, loadCount);
-            }
-            for (const _id of Object.keys(__loaderQueueSync)) {
-                const args = __loaderQueueSync[_id].args;
-                switch (__loaderQueueSync[_id].type) {
                     case "prefab":
                         createPrefab(...args);
                         break;
@@ -2091,6 +2093,8 @@ function FlevaR(_div = document.body, _options = {}) {
                         createScene(...args);
                         break;
                 }
+                if (__loaderQueue[_id].type === "async") loadCounter++;
+                __loadPercentInc(loadCounter, loadCount);
             }
         }
         const __simulateLoad = () => {
@@ -2100,8 +2104,7 @@ function FlevaR(_div = document.body, _options = {}) {
                     __loadToQueue(__loaderObj, ____engine);
                     await __loadFromQueue();
                     await __simulateLoad.drawLoadEnd(__screen.ctx);
-                    __loaderQueueAsync.length = 0;
-                    __loaderQueueSync.length = 0;
+                    __loaderQueue.length = 0;
                 } catch {
                     return resolve();
                 }
@@ -2169,22 +2172,22 @@ function FlevaR(_div = document.body, _options = {}) {
             const { loadBarWidth, loadBarHeight, loadBarX, loadBarY,
                 loadingBarWidth, loadingBarHeight, loadingBarX, loadingBarY } = this.dimensions;
 
-
+            
             _ctx.fillStyle = "#6F737F"
             _ctx.fillRect(loadBarX, loadBarY, loadBarWidth, loadBarHeight);
 
-
+            
             _ctx.fillStyle = "#2E323F"
             _ctx.fillRect(loadingBarX, loadingBarY, loadingBarWidth * _percent, loadingBarHeight);
         }
         __simulateLoad.drawLoadStart = async function (_ctx) {
             const { width, height } = _ctx;
 
-
+            
             _ctx.fillStyle = "#3B4050";
             _ctx.fillRect(0, 0, width, height);
 
-
+            
             await this.drawLogo(_ctx);
         }
         __simulateLoad.drawLoadEnd = async function (_ctx) {
@@ -2362,16 +2365,16 @@ function FlevaR(_div = document.body, _options = {}) {
     }
 
     const __tick = function () {
-
+        
         properties.scripts.forEach(_script => {
             _script(____thisObj, ____engine);
         });
-
+        
         for (const _name of Object.keys(__attachedPrefabs)) {
             __attachedPrefabs[_name].prefab.tick();
         }
 
-
+        
         try {
             if (properties.scene !== "")
                 __library.scenes[properties.scene].tick();
@@ -2388,11 +2391,11 @@ function FlevaR(_div = document.body, _options = {}) {
         const hasDrawer = helperUtils.isFunction(__callDrawer);
 
         hasDrawer && (drawerOrder === "start") && __callDrawer(__screen.ctx);
-
+        
         if (properties.scene !== "")
             __library.scenes[properties.scene].render();
 
-
+        
         for (const _name of Object.keys(__attachedPrefabs)) {
             __attachedPrefabs[_name].prefab.render();
         }
@@ -2407,7 +2410,7 @@ function FlevaR(_div = document.body, _options = {}) {
     }
     let __runID = 0;
     let __fpsID = 0;
-    let runitor = {
+    let runitor = { 
         fps: 0,
         spf: 0
     }
@@ -2425,22 +2428,22 @@ function FlevaR(_div = document.body, _options = {}) {
     }
     let __isRunning = false;
     const start = function (_interval) {
-
+        
         if (LoaderManager.state === "false") {
             LoaderManager.loader();
         }
         if (LoaderManager.state === "loaded") return console.error("App loaded. Press any key to continue.");
         if (LoaderManager.state !== "ready") return console.error("Can't start app. Loading not complete.");
 
-
+        
         stop();
-
+        
         __isRunning = true;
 
         if (properties.scene !== "")
             __library.scenes[properties.scene].start();
 
-
+        
         for (const _name of Object.keys(__attachedPrefabs)) {
             __attachedPrefabs[_name].prefab.start();
         }
@@ -2467,17 +2470,17 @@ function FlevaR(_div = document.body, _options = {}) {
         }, 1000);
     }
     const stop = function () {
-
+        
         deleteLoop(__runID);
         deleteLoop(__fpsID);
 
 
-
+        
         for (const _name of Object.keys(__attachedPrefabs)) {
             __attachedPrefabs[_name].prefab.stop();
         }
 
-
+        
 
         if (properties.scene !== "")
             __library.scenes[properties.scene].stop();
@@ -2504,7 +2507,7 @@ function FlevaR(_div = document.body, _options = {}) {
         __screen.div.addEventListener("keyup", __setKeyUp, false);
         __screen.div.onselectstart = function () { return false; }
 
-
+        
         const style = document.createElement('style');
         style.innerHTML = `
         *,
@@ -2513,9 +2516,9 @@ function FlevaR(_div = document.body, _options = {}) {
           box-sizing: border-box;
         }
         `;
-
+        
         const ref = document.querySelector('script');
-
+        
         ref.parentNode.insertBefore(style, ref);
     }
     const __unload = function () {

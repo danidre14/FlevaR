@@ -8,10 +8,13 @@ Include FlevaR to your website with the CDN:
 
 # [Versions](../../blob/master/versions/index.md):
 ## Latest
-### 0.06-
+### 0.07-
 - Coming soon.
 
 ## Previous
+### 0.06-
+- Coming soon.
+
 ### 0.04-
 - Coming soon.
 

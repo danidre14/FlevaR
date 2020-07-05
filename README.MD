@@ -1,22 +1,14 @@
 # FlevaR
 
-Include FlevaR to your website with the CDN:
+A dynamic game engine created in JavaScript for declarative game making.
 
-```html
-<script src="https://cdn.jsdelivr.net/gh/danidre14/FlevaR/FlevaRv{version}.js"></script>
-```
+![flevar logo](./assets/logo.png)
 
-# [Versions](../../blob/master/versions/index.md):
-## Latest
-### 0.07-
-- Coming soon.
+# Wiki(https://github.com/danidre14/FlevaR/wiki)
+An overview and tutorials on the FlevaR Engine.
 
-## Previous
-### 0.06-
-- Coming soon.
+# [Get started](Guide-Getting-Started)
+Follow a guide to help you set up your first FlevaR game.
 
-### 0.04-
-- Coming soon.
-
-### 0.03-
-- Coming soon.
+# [Documentation](Documentation-Overview)
+Visit the docs directly to view the syntax and detailed features.

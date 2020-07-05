@@ -5658,12 +5658,10 @@ function FlevaR(_div = document.body, _options = {}) {
                     let clear;
                     let getSize;
                     if (persistedObjects[objectName]) {
-                        console.log("before", { data, flush, clear, getSize })
                         data = persistedObjects[objectName].data;
                         flush = persistedObjects[objectName].flush;
                         clear = persistedObjects[objectName].clear;
                         getSize = persistedObjects[objectName].getSize;
-                        console.log("after", { data, flush, clear, getSize })
                     } else {
                         const value = localStorage.getItem(objectName);
                         if (value) data = unsignData(value);
@@ -5701,9 +5699,7 @@ function FlevaR(_div = document.body, _options = {}) {
 
                     persistObject(objectName, data, flush, clear, getSize);
 
-                    const ____returns = new __constructors.SharedObject({
-                        data, flush, clear, getSize
-                    });
+                    const ____returns = new __constructors.SharedObject();
                     Object.defineProperties(____returns, {
                         data: {
                             get: function () { return data },

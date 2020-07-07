@@ -1,24 +1,26 @@
 {
   "name": "flevar",
-  "version": "1.0.1",
+  "version": "1.2.0",
   "description": "FlevaR is a dynamic game engine created in JavaScript for declarative game making.",
   "main": "FlevaR.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/danidre14/FlevaR.git"
   },
   "keywords": [
     "game engine",
+    "game",
     "flevar",
-    "JavaScript"
+    "javascript"
   ],
   "author": "Danidre (danidre.com)",
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/danidre14/FlevaR/issues"
   },
-  "homepage": "https://github.com/danidre14/FlevaR/wiki"
+  "homepage": "https://github.com/danidre14/FlevaR/wiki",
+  "devDependencies": {
+    "decomment": "^0.9.2"
+  },
+  "dependencies": {}
 }

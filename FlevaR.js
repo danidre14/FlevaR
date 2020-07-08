@@ -6,6 +6,7 @@ function FlevaR(_div = document.body, _options = {}, _inits) {
         const editMode = _options.editor || false;
         const autosave = _options.autosave ? _options.autosave : false;
         const fps = _options.fps ? _options.fps : 30;
+        const applicationName = _options.name ? _options.name : "flevar_application";
         return {
             sprite: (() => {
                 const canvas = document.createElement('canvas');
@@ -103,7 +104,7 @@ function FlevaR(_div = document.body, _options = {}, _inits) {
                 } catch { return false }
             },
             engine: {
-                version: "FlevaR Version 0.09"
+                version: "FlevaR Version 1.2.1"
             },
             stage: {
                 _width: _options._width !== undefined ? Math.max(minStageWidth, _options._width) : 600,
@@ -114,7 +115,7 @@ function FlevaR(_div = document.body, _options = {}, _inits) {
             flevar_env: editMode ? "development" : "production",
             editor: editMode,
 
-            fps,
+            fps, applicationName,
 
             inits: _inits,
 
@@ -132,10 +133,18 @@ function FlevaR(_div = document.body, _options = {}, _inits) {
         }
     })();
 
+    const __takeScreenShot = function (_name) {
+        const name = _name ? _name : `${__defaults.applicationName}_${String(Date.now())}`;
+        const anchor = document.createElement("a");
+
+        anchor.download = name;
+        anchor.href = __screen.canvas.toDataURL();
+        anchor.click();
+    }
 
     const __config = {
         DEBUG: _options.debug,
-        EDITOR: FlevaR_Editor ? FlevaR_Editor(__defaults.editor, _div) : {}
+        EDITOR: window.FlevaR_Editor ? window.FlevaR_Editor(__defaults.editor, _div) : {}
     }
     const initConstructor = function (_con, ..._args) {
         for (const args of _args)
@@ -200,8 +209,6 @@ function FlevaR(_div = document.body, _options = {}, _inits) {
         const serializedID = String(Math.random()).substr(2);
         return `$${_symbol}_${__symbolAutoAdder++}_${serializedID}`;
     }
-
-
 
     const numberUtils = {
         DEG2RAD: Math.PI / 180,
@@ -5058,6 +5065,7 @@ function FlevaR(_div = document.body, _options = {}, _inits) {
         get version() { return __defaults.engine.version; },
         get loops() { return __loopManager.loops; },
         get FLEVAR_ENV() { return __defaults.flevar_env; },
+        get takeScreenShot() { return __takeScreenShot; }
     }
     const MouseModule = (function MouseModule() {
         const LEFT = 0;
@@ -6365,7 +6373,6 @@ function FlevaR(_div = document.body, _options = {}, _inits) {
             }
         }
     })();
-
 
     const ____returns = new __constructors.Engine({
         meta: MetaModule,

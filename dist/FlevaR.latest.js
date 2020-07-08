@@ -104,7 +104,7 @@ function FlevaR(_div = document.body, _options = {}, _inits) {
                 } catch { return false }
             },
             engine: {
-                version: "FlevaR Version 1.2.0"
+                version: "FlevaR Version 1.2.1"
             },
             stage: {
                 _width: _options._width !== undefined ? Math.max(minStageWidth, _options._width) : 600,
@@ -144,7 +144,7 @@ function FlevaR(_div = document.body, _options = {}, _inits) {
 
     const __config = {
         DEBUG: _options.debug,
-        EDITOR: FlevaR_Editor ? FlevaR_Editor(__defaults.editor, _div) : {}
+        EDITOR: window.FlevaR_Editor ? window.FlevaR_Editor(__defaults.editor, _div) : {}
     }
     const initConstructor = function (_con, ..._args) {
         for (const args of _args)

@@ -1,13 +1,13 @@
 ![flevar logo](./assets/logo.svg)
 
-A dynamic game engine created in JavaScript for declarative game making.
+FlevaR is a declarative JavaScript game engine for creating browser games and applications.
 
 
 # [Wiki](https://github.com/danidre14/FlevaR/wiki)
 An overview and tutorials on the FlevaR Engine.
 
-# [Get started](https://github.com/danidre14/FlevaR/wiki/Guide-Getting-Started)
-Follow a guide to help you set up your first FlevaR game.
+# [Guide](https://github.com/danidre14/FlevaR/wiki/Guide-Introduction)
+Follow a guide to help you get started on your first FlevaR application.
 
 # [Documentation](https://github.com/danidre14/FlevaR/wiki/Docs-Overview)
 Visit the docs directly to view the syntax and detailed features.

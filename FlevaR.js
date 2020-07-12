@@ -1,4 +1,8 @@
 function FlevaR(_div = document.body, _options = {}, _inits) {
+    if (_options.constructor !== Object) {
+        _inits = _options;
+        _options = {};
+    }
     const inits = [];
     const finis = [];
     const __defaults = (function () {
@@ -104,7 +108,7 @@ function FlevaR(_div = document.body, _options = {}, _inits) {
                 } catch { return false }
             },
             engine: {
-                version: "FlevaR Version 1.2.1"
+                version: "FlevaR Version 1.3.0"
             },
             stage: {
                 _width: _options._width !== undefined ? Math.max(minStageWidth, _options._width) : 600,
@@ -588,7 +592,7 @@ function FlevaR(_div = document.body, _options = {}, _inits) {
             return _val === undefined;
         },
         isNull: function (_val) {
-            return !this.isUndefined(_val) && !this.isObject(_val);
+            return _val === null;
         },
         isDefined: function (_val) {
             return !this.isUndefined(_val);
@@ -628,7 +632,6 @@ function FlevaR(_div = document.body, _options = {}, _inits) {
     const engineState = {};
 
     let __pixelResolution = _options.hitAccuracy || 10;
-    let __appearanceFunction = null;
     const __mainStack = {
         list: []
     }
@@ -642,14 +645,13 @@ function FlevaR(_div = document.body, _options = {}, _inits) {
     }
 
     const __mouse = {
-        _x: 0, _y: 0,
-        movX: 0, movY: 0
+        _x: null, _y: null,
+        movX: null, movY: null
     }
     const __mouseList = {
         isHidden: false,
     };
     const __mousePressed = {}, __mouseReleased = {};
-
 
     const __setMousePosition = function (_event) {
         const rect = __screen.canvas.getBoundingClientRect(),
@@ -767,11 +769,6 @@ function FlevaR(_div = document.body, _options = {}, _inits) {
         }
     }
 
-    const __callAppearanceFunction = () => {
-        if (helperUtils.isScriptOrFunction(__appearanceFunction)) {
-            __commandUtils.getScriptOrFunction(__appearanceFunction)(____thisObj);
-        }
-    }
     const __screen = (function () {
         if (_div == null) _div = document.body;
         const [__width, __height] = [__defaults.stage._width, __defaults.stage._height];
@@ -852,7 +849,7 @@ function FlevaR(_div = document.body, _options = {}, _inits) {
     const __private = {
         __emptyFunc: function () { }
     }
-    const propertyUtils = {
+    const metaUtils = {
         listFlevaClips: () => {
             const temp = [];
             for (const i of Object.keys(__library.flevaclips))
@@ -1086,39 +1083,6 @@ function FlevaR(_div = document.body, _options = {}, _inits) {
                 (sX > _point._x)
             );
         },
-        pixelHitTest: function (_source, _target) {
-            if (!_source.pixelMap) return false;
-            return true;
-            const __pR = 1;
-            const top = Math.floor(Math.max(_source._y, (_target._y - 0)) / __pR) * __pR;
-            const bottom = Math.floor(Math.min(_source._y + _source._height, (_target._y - 0) + _target._height) / __pR) * __pR;
-            const left = Math.floor(Math.max(_source._x, (_target._x - 0)) / __pR) * __pR;
-            const right = Math.floor(Math.min(_source._x + _source._width, (_target._x - 0) + _target._width) / __pR) * __pR;
-
-            const sX = Math.floor((_source._x - 1) / __pixelResolution) * __pixelResolution;
-            const sY = Math.floor((_source._y - 1) / __pixelResolution) * __pixelResolution;
-            const tX = Math.floor((_target._x - 1) / __pixelResolution) * __pixelResolution;
-            const tY = Math.floor((_target._y - 1) / __pixelResolution) * __pixelResolution;
-
-            for (let y = top - 1; y < bottom; y += __pixelResolution) {
-                for (let x = left - 1; x < right; x += __pixelResolution) {
-                    const pX = Math.floor((x - 0) / __pixelResolution) * __pixelResolution;
-                    const pY = Math.floor((y - 0) / __pixelResolution) * __pixelResolution;
-                    const pixel1 = _source.pixelMap.data[(pX - sX) + "_" + (pY - sY)];
-                    const pixel2 = _target.pixelMap.data[(pX - tX) + "_" + (pY - tY)];
-
-                    if (!pixel1 || !pixel2) {
-                        continue;
-                    };
-
-                    if (pixel1 > 5 && pixel2 > 5) {
-                        return true;
-                    }
-                }
-            }
-
-            return false;
-        },
         pixelHitTestPoint: function (_source, _point) {
             if (!_source.pixelMap) return false;
 
@@ -1269,7 +1233,7 @@ function FlevaR(_div = document.body, _options = {}, _inits) {
         }
     }
 
-    const __loopWorker = (function () {
+    const __runTime = (function __loopWorker() {
         const webworker = () => {
             const queue = {};
             self.onmessage = function ({ data }) {
@@ -1322,14 +1286,14 @@ function FlevaR(_div = document.body, _options = {}, _inits) {
             this.isRunning = true;
             const intv = (startNow ? 0 : this.interval);
             this.expected = Date.now() + intv;
-            __loopWorker.postMessage({ code: "step", id: this.id, interval: intv });
+            __runTime.postMessage({ code: "step", id: this.id, interval: intv });
         }
 
         stop() {
             if (!this.isRunning) return;
 
             this.isRunning = false;
-            __loopWorker.postMessage({ code: "clear", id: this.id });
+            __runTime.postMessage({ code: "clear", id: this.id });
         }
 
         async step() {
@@ -1348,7 +1312,7 @@ function FlevaR(_div = document.body, _options = {}, _inits) {
                     return this.stop();
                 }
             }
-            __loopWorker.postMessage({ code: "step", id: this.id, interval: Math.max(0, this.interval - drift) });
+            __runTime.postMessage({ code: "step", id: this.id, interval: Math.max(0, this.interval - drift) });
         }
     }
 
@@ -1395,7 +1359,7 @@ function FlevaR(_div = document.body, _options = {}, _inits) {
             loops[_id].exec.stop();
             delete loops[_id];
         }
-        __loopWorker.onmessage = function ({ data }) {
+        __runTime.onmessage = function ({ data }) {
             if (!loops[data.id]) return;
             loops[data.id].exec.step();
         }
@@ -1424,6 +1388,7 @@ function FlevaR(_div = document.body, _options = {}, _inits) {
     const __Scene = function (_inits) {
         const state = {};
         let __appearanceFunction = null;
+        let __stateChanged = false;
         let isLoaded = false;
 
         const __callAppearanceFunction = () => {
@@ -1455,7 +1420,10 @@ function FlevaR(_div = document.body, _options = {}, _inits) {
         let __flevaclipCount = 0;
         const __fillState = (_newState) => {
             for (const _name of Object.keys(_newState)) {
-                state[_name] = _newState[_name];
+                if (state[_name] !== _newState[_name]) {
+                    state[_name] = _newState[_name];
+                    if (!__stateChanged) __stateChanged = true;
+                }
             }
         }
         const __clearState = () => {
@@ -1470,7 +1438,6 @@ function FlevaR(_div = document.body, _options = {}, _inits) {
             _newState[_name] = _value;
 
             __fillState(_newState);
-            __callAppearanceFunction();
         }
         const useState = (_objOrFunc) => {
             if (helperUtils.isObject(_objOrFunc)) {
@@ -1478,14 +1445,12 @@ function FlevaR(_div = document.body, _options = {}, _inits) {
 
                 __clearState();
                 __fillState(_newState);
-                __callAppearanceFunction();
             } else if (helperUtils.isScriptOrFunction(_objOrFunc)) {
                 const prevState = objectUtils.deepCloneObject(state);
                 const _newState = __commandUtils.getScriptOrFunction(_objOrFunc)(prevState);
 
                 __clearState();
                 __fillState(_newState);
-                __callAppearanceFunction();
             }
         }
         const setState = (_objOrFunc) => {
@@ -1493,13 +1458,11 @@ function FlevaR(_div = document.body, _options = {}, _inits) {
                 const _newState = _objOrFunc;
 
                 __fillState(_newState);
-                __callAppearanceFunction();
             } else if (helperUtils.isScriptOrFunction(_objOrFunc)) {
                 const prevState = objectUtils.deepCloneObject(state);
                 const _newState = __commandUtils.getScriptOrFunction(_objOrFunc)(prevState);
 
                 __fillState(_newState);
-                __callAppearanceFunction();
             }
         }
 
@@ -1733,6 +1696,7 @@ function FlevaR(_div = document.body, _options = {}, _inits) {
         }
 
         const tick = async function () {
+            if (__stateChanged) __stateChanged = false;
             for (const _name of Object.keys(__heirarchy.scripts)) {
                 const _script = __heirarchy.scripts[_name];
                 await _script(____thisObj);
@@ -1744,7 +1708,7 @@ function FlevaR(_div = document.body, _options = {}, _inits) {
 
         }
         const render = function () {
-            const _clip = true;
+            if (__stateChanged) __callAppearanceFunction();
             if (__heirarchy.visuals.type === helperUtils.typeOf(__constructors.Sprite) ||
                 __heirarchy.visuals.type === helperUtils.typeOf(__constructors.SpriteSheet)) {
                 __commandUtils.renderScene(__commandUtils.drawSprite, [__heirarchy.visuals.src]);
@@ -1758,6 +1722,7 @@ function FlevaR(_div = document.body, _options = {}, _inits) {
             for (const _name of Object.keys(__heirarchy.flevaclips)) {
                 __heirarchy.flevaclips[_name].instance.__private__.__start();
             }
+            __callAppearanceFunction();
         }
         const stop = function () {
             for (const _name of Object.keys(__heirarchy.flevaclips)) {
@@ -1765,20 +1730,20 @@ function FlevaR(_div = document.body, _options = {}, _inits) {
             }
         }
 
-        const propertyUtils = {
+        const metaUtils = {
             flevaclipCount: () => {
                 return __flevaclipCount;
             }
         }
 
         const __private__ = {
+            metaUtils,
             ___getFlevaClipByInstanceName: (_instanceName) => {
                 for (const _name of Object.keys(__heirarchy.flevaclips)) {
                     if (__heirarchy.flevaclips[_name].instanceName === _instanceName) {
                         return __heirarchy.flevaclips[_name].instance;
                     }
                 }
-                return undefined;
             },
             __start: start, __stop: stop,
             __load: load, __unload: unload,
@@ -1786,7 +1751,6 @@ function FlevaR(_div = document.body, _options = {}, _inits) {
         }
 
         const ____returns = new __constructors.Scene({
-            propertyUtils,
             state,
             changeState,
             useState,
@@ -1815,6 +1779,7 @@ function FlevaR(_div = document.body, _options = {}, _inits) {
             useGraphic,
             usePainting
         }
+
         return ____returns;
     }
     const ___TextField = function ({ _x = 0, _y = 0, _width = 100, _height = 20, _padding = 0, _fontSize = 20, _lineHeight = 0, _fontFamily = "sansSerif", _textAlign = "left", _text: _initialText, _multiline = true, _wordWrap = true, _type = "dynamic", _backgroundColor = 0, _borderColor = 0, _fontColor = "black", _alpha = 1, _visible = true, _rotation = 0, _anchorX = 0, _anchorY = 0 } = {}) {
@@ -3594,7 +3559,8 @@ function FlevaR(_div = document.body, _options = {}, _inits) {
 
         const __fillState = (_newState) => {
             for (const _name of Object.keys(_newState)) {
-                state[_name] = _newState[_name];
+                if (state[_name] !== _newState[_name])
+                    state[_name] = _newState[_name];
             }
         }
         const __clearState = () => {
@@ -3650,19 +3616,28 @@ function FlevaR(_div = document.body, _options = {}, _inits) {
             }
         }
 
-        const globalToLocal = (_point) => {
-            return {
-                _x: _point._x - props._x,
-                _y: _point._y - props._y
+        const globalToLocal = (_point, _relative = false) => {
+            if (_relative === true) {
+                const rotatedPoint = numberUtils.rotatePoint(_point.x - props._x, _point.y - props._y, -props._rotation);
+                _point.x = rotatedPoint._x;
+                _point.y = rotatedPoint._y;
+            } else {
+                _point.x -= props._x;
+                _point.y -= props._y;
             }
-        }
-
-        const globalToLocalRelative = (_point) => {
-            return numberUtils.rotatePoint(_point._x - props._x, _point._y - props._y, props._rotation);
         }
 
         const swapDepths = (_depth) => {
             if (_funcs && _funcs.swapDepths) _funcs.swapDepths(_depth);
+        }
+
+        const hitTest = (...args) => {
+            if (helperUtils.isNull(args[0])) return false;
+            if (helperUtils.isNumber(args[0])) {
+                return hitTestPoint(...args);
+            } else {
+                return hitTestFlevaClip(...args);
+            }
         }
 
         const hitTestPoint = (_x, _y, _pixel) => {
@@ -3670,8 +3645,9 @@ function FlevaR(_div = document.body, _options = {}, _inits) {
             if (!helperUtils.isNumber(_y)) throw `Number expected for _y point.`;
 
             const sourceProps = props;
-            const targetPoint = { _x, _y };
             if (!sourceProps._visible) return false;
+
+            const targetPoint = { _x, _y };
 
             if (!_pixel) {
                 const sourceBounds = __getBounds();
@@ -3682,26 +3658,23 @@ function FlevaR(_div = document.body, _options = {}, _inits) {
             }
         }
 
-        const hitTestFlevaClip = (_flevaclipOrName, _pixel) => {
+        const hitTestFlevaClip = (_target) => {
             let flevaclip;
-            if (helperUtils.isFlevaClip(_flevaclipOrName))
-                flevaclip = _flevaclipOrName;
-            else if (helperUtils.isString(_flevaclipOrName))
-                flevaclip = __getFlevaClipByInstanceName(_flevaclipOrName);
-            else throw `Invalid flevaclip argument! FlevaClip or string expected.`;
-            if (!flevaclip) throw `FlevaClip with instance name ${_flevaclipOrName} not found.`;
+            if (helperUtils.isFlevaClip(_target))
+                flevaclip = _target;
+            else if (helperUtils.isString(_target))
+                flevaclip = __getFlevaClipByInstanceName(_target);
+            else throw `Invalid target argument! FlevaClip reference or string expected.`;
+            if (!flevaclip) throw `FlevaClip with instance name ${_target} not found.`;
 
             const sourceProps = props;
             const targetProps = flevaclip.__private__.___getProps();
-            const sourceBounds = __getBounds();
-            const targetBounds = flevaclip.__private__.___getBounds();
             if (!sourceProps._visible || !targetProps._visible) return false;
 
-            if (__commandUtils.boxHitTest(sourceBounds, targetBounds)) {
-                return true;
-            }
+            const sourceBounds = __getBounds();
+            const targetBounds = flevaclip.__private__.___getBounds();
 
-            return false;
+            return __commandUtils.boxHitTest(sourceBounds, targetBounds);
         }
 
         const addScript = (_script) => {
@@ -3787,8 +3760,7 @@ function FlevaR(_div = document.body, _options = {}, _inits) {
 
         const ____returns = new __constructors.TextField({
             state,
-            hitTestFlevaClip,
-            hitTestPoint,
+            hitTest,
             changeState,
             useState,
             setState,
@@ -3796,7 +3768,6 @@ function FlevaR(_div = document.body, _options = {}, _inits) {
             localToGlobal,
             localRelativeToGlobal,
             globalToLocal,
-            globalToLocalRelative,
             swapDepths
         });
 
@@ -3826,6 +3797,7 @@ function FlevaR(_div = document.body, _options = {}, _inits) {
     const __Prefab = function (_props = { _x: 0, _y: 0, _width: 50, _height: 50, _alpha: 1, _visible: true, _rotation: 0, _anchorX: 0, _anchorY: 0 }, _inits, _funcs) {
         const state = {}, props = { _x: 0, _y: 0, _width: 50, _height: 50, _alpha: 1, _visible: true, _rotation: 0, _anchorX: 0, _anchorY: 0 };
         let __appearanceFunction = null;
+        let __stateChanged = false;
         let isLoaded = false;
 
         let __rotation = 0, __anchorX = 0, __anchorY = 0;
@@ -3867,17 +3839,17 @@ function FlevaR(_div = document.body, _options = {}, _inits) {
             }
         });
 
-        const __callAppearanceFunction = () => {
-            if (helperUtils.isScriptOrFunction(__appearanceFunction)) {
-                __commandUtils.getScriptOrFunction(__appearanceFunction)(____appearanceObject);
-            }
-        }
         if (_props) {
             if (!helperUtils.isObject(_props)) return;
             for (const _prop of Object.keys(_props))
                 if (helperUtils.isDefined(props[_prop])) props[_prop] = _props[_prop];
         }
 
+        const __callAppearanceFunction = () => {
+            if (helperUtils.isScriptOrFunction(__appearanceFunction)) {
+                __commandUtils.getScriptOrFunction(__appearanceFunction)(____appearanceObject);
+            }
+        }
         const __heirarchy = {
             scripts: [],
             visuals: {
@@ -3931,7 +3903,10 @@ function FlevaR(_div = document.body, _options = {}, _inits) {
 
         const __fillState = (_newState) => {
             for (const _name of Object.keys(_newState)) {
-                state[_name] = _newState[_name];
+                if (state[_name] !== _newState[_name]) {
+                    state[_name] = _newState[_name];
+                    if (!__stateChanged) __stateChanged = true;
+                }
             }
         }
         const __clearState = () => {
@@ -3944,7 +3919,6 @@ function FlevaR(_div = document.body, _options = {}, _inits) {
             _newState[_name] = _value;
 
             __fillState(_newState);
-            __callAppearanceFunction();
         }
         const useState = (_objOrFunc) => {
             if (helperUtils.isObject(_objOrFunc)) {
@@ -3952,14 +3926,12 @@ function FlevaR(_div = document.body, _options = {}, _inits) {
 
                 __clearState();
                 __fillState(_newState);
-                __callAppearanceFunction();
             } else if (helperUtils.isScriptOrFunction(_objOrFunc)) {
                 const prevState = objectUtils.deepCloneObject(state);
                 const _newState = __commandUtils.getScriptOrFunction(_objOrFunc)(prevState);
 
                 __clearState();
                 __fillState(_newState);
-                __callAppearanceFunction();
             }
         }
         const setState = (_objOrFunc) => {
@@ -3967,13 +3939,11 @@ function FlevaR(_div = document.body, _options = {}, _inits) {
                 const _newState = _objOrFunc;
 
                 __fillState(_newState);
-                __callAppearanceFunction();
             } else if (helperUtils.isScriptOrFunction(_objOrFunc)) {
                 const prevState = objectUtils.deepCloneObject(state);
                 const _newState = __commandUtils.getScriptOrFunction(_objOrFunc)(prevState);
 
                 __fillState(_newState);
-                __callAppearanceFunction();
             }
         }
 
@@ -3992,19 +3962,28 @@ function FlevaR(_div = document.body, _options = {}, _inits) {
             }
         }
 
-        const globalToLocal = (_point) => {
-            return {
-                _x: _point._x - props._x,
-                _y: _point._y - props._y
+        const globalToLocal = (_point, _relative = false) => {
+            if (_relative === true) {
+                const rotatedPoint = numberUtils.rotatePoint(_point.x - props._x, _point.y - props._y, -props._rotation);
+                _point.x = rotatedPoint._x;
+                _point.y = rotatedPoint._y;
+            } else {
+                _point.x -= props._x;
+                _point.y -= props._y;
             }
-        }
-
-        const globalToLocalRelative = (_point) => {
-            return numberUtils.rotatePoint(_point._x - props._x, _point._y - props._y, props._rotation);
         }
 
         const swapDepths = (_depth) => {
             if (_funcs && _funcs.swapDepths) _funcs.swapDepths(_depth);
+        }
+
+        const hitTest = (...args) => {
+            if (helperUtils.isNull(args[0])) return false;
+            if (helperUtils.isNumber(args[0])) {
+                return hitTestPoint(...args);
+            } else {
+                return hitTestFlevaClip(...args);
+            }
         }
 
         const hitTestPoint = (_x, _y, _pixel) => {
@@ -4012,53 +3991,45 @@ function FlevaR(_div = document.body, _options = {}, _inits) {
             if (!helperUtils.isNumber(_y)) throw `Number expected for _y point.`;
 
             const sourceProps = props;
-            const targetPoint = { _x, _y };
             if (!sourceProps._visible) return false;
 
+            const targetPoint = { _x, _y };
             const isSpriteOrSheet = (__heirarchy.visuals.type === helperUtils.typeOf(__constructors.Sprite) ||
                 __heirarchy.visuals.type === helperUtils.typeOf(__constructors.SpriteSheet));
-            if (!_pixel || !isSpriteOrSheet) {
+
+            if (!_pixel) {
                 const sourceBounds = __getBounds();
-                if (__commandUtils.boxHitTestPoint(sourceBounds, targetPoint)) {
-                    return true;
-                }
+                return __commandUtils.boxHitTestPoint(sourceBounds, targetPoint);
+            } else if (!isSpriteOrSheet) {
+                const rotatedPoint = __commandUtils.getRotatedMappedPoint(targetPoint, props);
+                return __commandUtils.boxHitTestPoint(sourceProps, rotatedPoint);
             } else {
                 const sourceSprite = __heirarchy.visuals.src;
-                if (!sourceSprite) return false;
                 const sourcePixelMap = __commandUtils.getPixelMap(sourceSprite);
                 const source = { ...sourceProps, pixelMap: sourcePixelMap };
                 const rotatedPoint = __commandUtils.getRotatedMappedPoint(targetPoint, props);
 
-                if (__commandUtils.boxHitTestPoint(source, rotatedPoint)) {
-                    if (__commandUtils.pixelHitTestPoint(source, rotatedPoint)) {
-                        return true;
-                    }
-                }
+                return __commandUtils.boxHitTestPoint(source, rotatedPoint) && __commandUtils.pixelHitTestPoint(source, rotatedPoint);
             }
-
-            return false;
         }
 
-        const hitTestFlevaClip = (_flevaclipOrName, _pixel) => {
+        const hitTestFlevaClip = (_target) => {
             let flevaclip;
-            if (helperUtils.isFlevaClip(_flevaclipOrName))
-                flevaclip = _flevaclipOrName;
-            else if (helperUtils.isString(_flevaclipOrName))
-                flevaclip = __getFlevaClipByInstanceName(_flevaclipOrName);
-            else throw `Invalid flevaclip argument! FlevaClip or string expected.`;
-            if (!flevaclip) throw `FlevaClip with instance name ${_flevaclipOrName} not found.`;
+            if (helperUtils.isFlevaClip(_target))
+                flevaclip = _target;
+            else if (helperUtils.isString(_target))
+                flevaclip = __getFlevaClipByInstanceName(_target);
+            else throw `Invalid target argument! FlevaClip reference or string expected.`;
+            if (!flevaclip) throw `FlevaClip with instance name ${_target} not found.`;
 
             const sourceProps = props;
             const targetProps = flevaclip.__private__.___getProps();
-            const sourceBounds = __getBounds();
-            const targetBounds = flevaclip.__private__.___getBounds();
             if (!sourceProps._visible || !targetProps._visible) return false;
 
-            if (__commandUtils.boxHitTest(sourceBounds, targetBounds)) {
-                return true;
-            }
+            const sourceBounds = __getBounds();
+            const targetBounds = flevaclip.__private__.___getBounds();
 
-            return false;
+            return __commandUtils.boxHitTest(sourceBounds, targetBounds);
         }
 
         const __spriteSheet = [];
@@ -4189,12 +4160,14 @@ function FlevaR(_div = document.body, _options = {}, _inits) {
         }
 
         const tick = async () => {
+            if (__stateChanged) __stateChanged = false;
             for (const _name of Object.keys(__heirarchy.scripts)) {
                 const _script = __heirarchy.scripts[_name];
                 await _script(____thisObj);
             }
         }
         const render = () => {
+            if (__stateChanged) __callAppearanceFunction();
             const _clip = true;
             if (__heirarchy.visuals.type === helperUtils.typeOf(__constructors.Sprite) ||
                 __heirarchy.visuals.type === helperUtils.typeOf(__constructors.SpriteSheet)) {
@@ -4241,8 +4214,7 @@ function FlevaR(_div = document.body, _options = {}, _inits) {
 
         const ____returns = new __constructors.Prefab({
             state,
-            hitTestFlevaClip,
-            hitTestPoint,
+            hitTest,
             changeState,
             useState,
             setState,
@@ -4251,7 +4223,6 @@ function FlevaR(_div = document.body, _options = {}, _inits) {
             localToGlobal,
             localRelativeToGlobal,
             globalToLocal,
-            globalToLocalRelative,
             swapDepths
         });
 
@@ -4674,12 +4645,12 @@ function FlevaR(_div = document.body, _options = {}, _inits) {
                 return __attachedFlevaClips[_name].instance;
             }
         }
-        return {};
     }
 
     const __fillState = (_newState) => {
         for (const _name of Object.keys(_newState)) {
-            engineState[_name] = _newState[_name];
+            if (engineState[_name] !== _newState[_name])
+                engineState[_name] = _newState[_name];
         }
     }
     const __clearState = () => {
@@ -4863,8 +4834,8 @@ function FlevaR(_div = document.body, _options = {}, _inits) {
             for (const _key of Object.keys(stack)) {
                 const instance = stack[_key].instance;
                 if (instance.__private__.___setSelection)
-                    if (instance.__private__._isMouseInFlevaClip(stage._xmouse, stage._ymouse)) {
-                        __setSelectedFlevaClip(instance.__private__.___setSelection(stage._xmouse, stage._ymouse));
+                    if (instance.__private__._isMouseInFlevaClip(__stage._xmouse, __stage._ymouse)) {
+                        __setSelectedFlevaClip(instance.__private__.___setSelection(__stage._xmouse, __stage._ymouse));
                         if (__hasSelectedFlevaClip()) break;
                     }
             }
@@ -5136,31 +5107,49 @@ function FlevaR(_div = document.body, _options = {}, _inits) {
         return ____returns;
     })();
     const KeyModule = (function KeyModule() {
-        const LEFT = 37;
-        const RIGHT = 39;
-        const UP = 38;
-        const DOWN = 40;
-        const SPACE = 32;
-        const BACKSPACE = 8;
-        const TAB = 9;
-        const ENTER = 13;
-        const SHIFT = 16;
-        const CONTROL = 17;
-        const CTRL = 17;
-        const ALTERNATE = 18;
-        const ALT = 18;
+        const CODES = {
+            ALT: 18,
+            BACKSPACE: 8,
+            CAPSLOCK: 20,
+            CONTROL: 17,
+            DELETE: 46,
+            DOWN: 40,
+            END: 35,
+            ENTER: 13,
+            ESCAPE: 27,
+            HOME: 36,
+            INSERT: 45,
+            LEFT: 37,
+            PGDN: 34,
+            PGUP: 33,
+            RIGHT: 39,
+            SHIFT: 16,
+            SPACE: 32,
+            TAB: 9,
+            UP: 38,
+        }
+
+        const DIGITS = {
+            ZERO: 48,
+            ONE: 49,
+            TWO: 50,
+            THREE: 51,
+            FOUR: 52,
+            FIVE: 53,
+            SIX: 54,
+            SEVEN: 55,
+            EIGHT: 56,
+            NINE: 57
+        }
+
         const ALPHABET = {
             A: 65, B: 66, C: 67, D: 68, E: 69, F: 70, G: 71, H: 72, I: 73, J: 74, K: 75, L: 76, M: 77, N: 78, O: 79, P: 80, Q: 81, R: 82, S: 83, T: 84, U: 85, V: 86, W: 87, X: 88, Y: 89, Z: 90
         }
-        const MAP = {
-            'space': ' ',
-            'left': 'arrowleft',
-            'up': 'arrowup',
-            'right': 'arrowright',
-            'down': 'arrowdown',
-            'ctrl': 'control',
-            'alternate': 'alt'
-        }
+        const MAP = Object.entries({ ...CODES, ...DIGITS }).reduce(function (_obj, _entry) {
+            _obj[_entry[0].toLowerCase()] = _entry[1];
+            return _obj;
+        }, {});
+
         const isDown = function (_key) {
             if (typeof _key === "string") {
                 _key = _key.toLowerCase();
@@ -5194,10 +5183,9 @@ function FlevaR(_div = document.body, _options = {}, _inits) {
         const ____returns = new __constructors.Key({
             isDown, isUp,
             isPressed, isReleased,
-            LEFT, RIGHT, UP, DOWN,
-            SPACE, BACKSPACE, ENTER,
-            TAB, SHIFT, CONTROL, CTRL, ALTERNATE, ALT,
-            ...ALPHABET
+            ...CODES,
+            ...ALPHABET,
+            ...DIGITS
         });
 
         return ____returns;
@@ -5312,13 +5300,13 @@ function FlevaR(_div = document.body, _options = {}, _inits) {
                 return __emitError(`Cannot stop "${_name}": Sound file does not exist.`);
             }
 
-            if (!getPaused(_name))
+            if (!isPaused(_name))
                 sounds[_name].src.pause();
 
             sounds[_name].src.currentTime = 0;
             sounds[_name].src.loop = false;
-            if (!getPaused(_name))
-                __onStop(_name);
+
+            __onStop(_name);
         }
 
 
@@ -5513,13 +5501,13 @@ function FlevaR(_div = document.body, _options = {}, _inits) {
 
             return sounds[_name].src.loop;
         }
-        const setLoop = function (_name, value) {
+        const setLoop = function (_name, _value) {
             _name = __checkSoundName(_name);
             if (!sounds[_name]) {
                 return __emitError(`Cannot set loop for "${_name}": Sound file does not exist.`);
             }
 
-            return sounds[_name].src.loop = value;
+            return sounds[_name].src.loop = _value;
         }
 
         const getTime = function (_name) {
@@ -5530,22 +5518,31 @@ function FlevaR(_div = document.body, _options = {}, _inits) {
 
             return sounds[_name].src.currentTime;
         }
-        const setTime = function (_name, value) {
+        const setTime = function (_name, _value) {
             _name = __checkSoundName(_name);
             if (!sounds[_name]) {
                 return __emitError(`Cannot set time for "${_name}": Sound file does not exist.`);
             }
 
-            return sounds[_name].src.currentTime = value;
+            return sounds[_name].src.currentTime = _value;
         }
 
-        const getPaused = function (_name) {
+        const isPaused = function (_name) {
             _name = __checkSoundName(_name);
             if (!sounds[_name]) {
-                return __emitError(`Cannot get paused for "${_name}": Sound file does not exist.`);
+                return __emitError(`Cannot check if "${_name}" is paused: Sound file does not exist.`);
             }
 
             return sounds[_name].src.paused;
+        }
+
+        const isMuted = function (_name) {
+            _name = __checkSoundName(_name);
+            if (!sounds[_name]) {
+                return __emitError(`Cannot check if "${_name}" is muted: Sound file does not exist.`);
+            }
+
+            return sounds[_name].src.muted;
         }
 
         const ____returns = new __constructors.Sound({
@@ -5570,7 +5567,8 @@ function FlevaR(_div = document.body, _options = {}, _inits) {
             setLoop,
             getTime,
             setTime,
-            getPaused
+            isPaused,
+            isMuted
         });
 
         return ____returns;
@@ -5923,7 +5921,7 @@ function FlevaR(_div = document.body, _options = {}, _inits) {
         return ____returns;
     })();
 
-    const stage = {
+    const __stage = {
         get _width() {
             return __defaults.stage._width;
         },
@@ -5943,13 +5941,42 @@ function FlevaR(_div = document.body, _options = {}, _inits) {
             return __defaults.stage._color;
         },
         set _color(_color) {
-            return __defaults.stage._color = _color;
+            __defaults.stage._color = _color;
         }
     }
 
     const _root = new Proxy(this, {
-        get: function (object, property) {
-            return __getFlevaClipByInstanceName(property);
+        has: function () { return false; },
+        get: (object, property) => {
+            const config = Object.getOwnPropertyDescriptor(this, property);
+            if (config && config.configurable === false && config.writable === false) {
+                return this[property];
+            }
+
+            let result = __getFlevaClipByInstanceName(property);
+            if (result) return result;
+
+            if (Reflect.has(__stage, property))
+                return Reflect.get(__stage, property);
+
+            if (Reflect.has(__functions, property))
+                return Reflect.get(__functions, property);
+
+            return {};
+        },
+        set: (object, property, value) => {
+            const config = Object.getOwnPropertyDescriptor(this, property);
+            if (config && config.configurable === false && config.writable === false) return;
+
+            let result = __getFlevaClipByInstanceName(property);
+            if (result) return;
+
+            if (Reflect.has(__stage, property)) {
+                Reflect.set(__stage, property, value);
+                return;
+            }
+
+            if (Reflect.has(__functions, property)) return;
         }
     });
 
@@ -5958,7 +5985,6 @@ function FlevaR(_div = document.body, _options = {}, _inits) {
         _newState[_name] = _value;
 
         __fillState(_newState);
-        __callAppearanceFunction();
     }
     const useState = (_objOrFunc) => {
         if (helperUtils.isObject(_objOrFunc)) {
@@ -5966,14 +5992,12 @@ function FlevaR(_div = document.body, _options = {}, _inits) {
 
             __clearState();
             __fillState(_newState);
-            __callAppearanceFunction();
         } else if (helperUtils.isScriptOrFunction(_objOrFunc)) {
             const prevState = objectUtils.deepCloneObject(engineState);
             const _newState = __commandUtils.getScriptOrFunction(_objOrFunc)(prevState);
 
             __clearState();
             __fillState(_newState);
-            __callAppearanceFunction();
         }
     }
     const setState = (_objOrFunc) => {
@@ -5981,13 +6005,11 @@ function FlevaR(_div = document.body, _options = {}, _inits) {
             const _newState = _objOrFunc;
 
             __fillState(_newState);
-            __callAppearanceFunction();
         } else if (helperUtils.isScriptOrFunction(_objOrFunc)) {
             const prevState = objectUtils.deepCloneObject(engineState);
             const _newState = __commandUtils.getScriptOrFunction(_objOrFunc)(prevState);
 
             __fillState(_newState);
-            __callAppearanceFunction();
         }
     }
 
@@ -6032,6 +6054,14 @@ function FlevaR(_div = document.body, _options = {}, _inits) {
         removeFlevaClip("textfield", _instanceName);
     }
 
+    const __functions = {
+        attachPrefab,
+        attachTextField,
+
+        removePrefab,
+        removeTextField
+    }
+
     const createPrefab = function (_name, _props, _init) {
         createFlevaClip("prefab", _name, _props, _init)
     }
@@ -6047,9 +6077,13 @@ function FlevaR(_div = document.body, _options = {}, _inits) {
         ___errorsM.checkScriptExist(_name);
         __library.scripts[_name] = __Script(_func);
     }
-    const createSprite = async function (_name, _props, _func) {
+    const createSprite = async function (_name, _props, _definition) {
         ___errorsM.checkSpriteExist(_name);
-        __library.sprites[_name] = await __Sprite(_name, _props, _func);
+        if (!helperUtils.isObject(_props)) {
+            _definition = _props;
+            _props = {};
+        }
+        __library.sprites[_name] = await __Sprite(_name, _props, _definition);
     }
     const createSpriteSheet = async function (_name, _props, ..._func) {
         ___errorsM.checkSpriteSheetExist(_name);
@@ -6381,7 +6415,6 @@ function FlevaR(_div = document.body, _options = {}, _inits) {
         Sound: SoundModule,
         SharedObject: SharedObjectModule,
 
-        stage,
         utils: helperUtils,
 
         _root,
@@ -6395,12 +6428,6 @@ function FlevaR(_div = document.body, _options = {}, _inits) {
 
         useScene,
         resetScene,
-
-        attachPrefab,
-        attachTextField,
-
-        removePrefab,
-        removeTextField,
 
         createPrefab,
         createTextField,

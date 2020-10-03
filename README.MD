@@ -11,3 +11,6 @@ Follow a guide to help you get started on your first FlevaR application.
 
 # [Documentation](https://github.com/danidre14/FlevaR/wiki/Docs-Overview)
 Visit the docs directly to view the syntax and detailed features.
+
+## [Changelog](https://github.com/danidre14/FlevaR/blob/master/changelog.md)
+See the changes and updates to the engine.

@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.1.0 (April 21, 2021)
+- Feature: Added `VCam` (Virtual Camera) Module.
+- Enhancement: Modified `useLoader` option to only load engine when the page is fully loaded.
+- Adjustment: Moved initial `_xmouse`, `_ymouse`, `_xmouseMov`, `_ymouseMov` properties from `_root` to `vcam`.
+
 ## 2.0.0 (October 3, 2020)
 - Feature: Added fullscreen support.
 - Feature: Added pointer lock support.

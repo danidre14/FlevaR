@@ -1,6 +1,6 @@
 const FlevaR = (function FlevaR() {
     "use strict";
-    return function (_div = document.body, _options = {}, _inits) {
+    return function (_div = document.body, { defVCAM, ..._options } = {}, _inits) {
         if (_options.constructor !== Object) {
             _inits = _options;
             _options = {};
@@ -68,8 +68,8 @@ const FlevaR = (function FlevaR() {
                     version: "FlevaR Version 2.0.0"
                 },
                 stage: {
-                    _width: _options.width !== undefined ? Math.max(minStageWidth, _options.width) : 600,
-                    _height: _options.height !== undefined ? Math.max(minStageHeight, _options.height) : 500,
+                    _width: _options._width !== undefined ? Math.max(minStageWidth, _options._width) : 600,
+                    _height: _options._height !== undefined ? Math.max(minStageHeight, _options._height) : 500,
                     _color: "#fff0"
                 },
                 minStageWidth, minStageHeight,
@@ -152,7 +152,7 @@ const FlevaR = (function FlevaR() {
                 const args = Array.prototype.slice.call(arguments);
                 initConstructor(this, ...args);
             },
-            Script: function Script() { },
+            Script: function Script() {  },
             Sprite: function Sprite() {
                 const args = Array.prototype.slice.call(arguments);
                 initConstructor(this, ...args);
@@ -172,7 +172,11 @@ const FlevaR = (function FlevaR() {
             Painting: function Painting() {
                 const args = Array.prototype.slice.call(arguments);
                 initConstructor(this, ...args);
-            }
+            },
+            VCam: function VCam() {
+                const args = Array.prototype.slice.call(arguments);
+                initConstructor(this, ...args);
+            },
         }
 
         let _symbolAutoAdder = 0;
@@ -185,6 +189,17 @@ const FlevaR = (function FlevaR() {
             DEG2RAD: Math.PI / 180,
             RAD2DEG: 180 / Math.PI,
 
+            lerp: function (_value1, _value2, _amount, _lock = 0, _ceil) {
+                _amount = _amount < 0 ? 0 : _amount;
+                _amount = _amount > 1 ? 1 : _amount;
+
+                const value = (1 - _amount) * _value1 + _amount * _value2;
+                if (!_lock) return _ceil ? Math.ceil(value) : value;
+
+                const val = (_value2 - value > -_lock && _value2 - value < _lock) ? _value2 : value;
+
+                return _ceil ? Math.ceil(val) : val;
+            },
             wheelClamp(_num, _a = 0, _b = 0) {
                 if (!helperUtils.isNumber(_num)) return 0;
                 if (!helperUtils.isNumber(_a)) return _num;
@@ -247,13 +262,16 @@ const FlevaR = (function FlevaR() {
             xPerSecond(_num) {
                 return 1000 / _num;
             },
-            rotatePoint(_x, _y, _angle) {
+            rotatePoint(_x, _y, _angle = 0, _cx = 0, _cy = 0) {
                 if (_angle === 0) return this.newPoint(_x, _y);
                 const angle = this.degreesToRadians(_angle);
                 const [pX, pY] = [_x, _y];
 
-                const rX = pX * Math.cos(angle) - pY * Math.sin(angle);
-                const rY = pX * Math.sin(angle) + pY * Math.cos(angle);
+                const cos = Math.cos(angle);
+                const sin = Math.sin(angle);
+
+                const rX = ((pX - _cx) * cos) - ((pY - _cy) * sin) + _cx;
+                const rY = ((pX - _cx) * sin) + ((pY - _cy) * cos) + _cy;
 
                 return this.newPoint(rX, rY);
             },
@@ -392,7 +410,7 @@ const FlevaR = (function FlevaR() {
                             result = objectUtils.cloneObject(_a).sort(function () {
                                 return random > .5 ? -1 : 1;
                             });
-                    } else if (helperUtils.isObject(_a)) {
+                    } else if (helperUtils.isObject(_a)) { 
                         const keys = Object.keys(_a);
                         const key = keys[keys.length * Math.random() << 0];
                         if (_b === 1)
@@ -545,6 +563,13 @@ const FlevaR = (function FlevaR() {
                     return false;
                 }
             },
+            isVCam(_val) {
+                try {
+                    return _val.constructor === _constructors.VCam || _val === _constructors.VCam;
+                } catch {
+                    return false;
+                }
+            },
             isEngine(_val) {
                 try {
                     return _val.constructor === _constructors.Engine || _val === _constructors.Engine;
@@ -586,6 +611,7 @@ const FlevaR = (function FlevaR() {
                     { func: this.isSound, type: "sound" },
                     { func: this.isPainting, type: "painting" },
                     { func: this.isSpriteSheet, type: "spritesheet" },
+                    { func: this.isVCam, type: "vcam" },
                     { func: this.isMouse, type: "mouse" },
                     { func: this.isKey, type: "key" },
                     { func: this.isFloxy, type: "floxy" },
@@ -775,7 +801,7 @@ const FlevaR = (function FlevaR() {
                 },
 
 
-                takeScreenShot(_name) {
+                takeScreenshot(_name) {
                     const name = _name ? _name : `${_defaults.applicationName}_${String(Date.now())}`;
                     const anchor = document.createElement("a");
 
@@ -826,6 +852,7 @@ const FlevaR = (function FlevaR() {
 
                         MouseModule._private_._x = _defaults.stage._width / 2;
                         MouseModule._private_._y = _defaults.stage._height / 2;
+                        vcam._private_._setMouseStagePositions();
                     } catch { }
                 },
                 closePointerlock() {
@@ -839,7 +866,7 @@ const FlevaR = (function FlevaR() {
                     if (!(this._isPointerlock() && MouseModule._visible)) return;
                     const cursor = cursorTypes[MouseModule._private_._getCursorType()] || cursorTypes.default;
                     this.ctx.save();
-                    this.ctx.drawImage(cursor, (_stage._xmouse * this.xScale) - 32, (_stage._ymouse * this.yScale) - 32, 64, 64);
+                    this.ctx.drawImage(cursor, (vcam._xmouse * this.xScale) - 32, (vcam._ymouse * this.yScale) - 32, 64, 64);
                     this.ctx.restore();
                 },
 
@@ -892,13 +919,13 @@ const FlevaR = (function FlevaR() {
                 },
                 renderFlevaClipBounds({ _bounds, ..._props }) {
                     if (!__config.EDITOR.canRenderBounds) return;
-                    if (!this._isInScreen(_bounds)) return;
+                    if (!vcam._private_._isInScreen(_bounds)) return;
 
                     __config.EDITOR.renderBoundedBox(this.ctx, _props, _bounds);
                     __config.EDITOR.renderRotatedBox(this.ctx, _props, this._setPosition.bind(this));
                 },
                 renderFlevaClip({ _bounds, _clip, ..._props }, _type, _parameters = []) {
-                    if (!this._isInScreen(_bounds)) return;
+                    if (!vcam._private_._isInScreen(_bounds)) return;
                     if (!_props._visible) return;
                     const ctx = this.ctx;
                     const { _x = 0, _y = 0, _width = _defaults.size, _height = _defaults.size, _alpha } = _props;
@@ -988,7 +1015,7 @@ const FlevaR = (function FlevaR() {
             isRunTimeStarted: false,
             runIDs: [],
             fpsIDs: [],
-            runitor: {
+            runitor: { 
                 fps: 0,
                 spf: 0
             }
@@ -1272,7 +1299,7 @@ const FlevaR = (function FlevaR() {
                 const functionString = this.getScription(_scription).toString();
 
                 let mask;
-                const reservedWords = ["self", "state", "include", "require"];
+                const reservedWords = ["self", "state", "include", "require"]; 
                 const reservedScope = { flevar: _engineObj, get scene() { return _stage._scene } };
                 const handler = {
                     has() { return true; },
@@ -1334,7 +1361,7 @@ const FlevaR = (function FlevaR() {
                         return true;
                     }
                 }
-                if (helperUtils.isUndefined(objScope.self)) {
+                if (helperUtils.isUndefined(objScope.self)) { 
                     const scope = {
                         console, Math, include(val) {
                             if (window[val]) _engineScope[val] = window[val];
@@ -1344,7 +1371,7 @@ const FlevaR = (function FlevaR() {
                     };
                     Object.assign(objScope, scope, { self: true });
                     mask = new Proxy(objScope, handler);
-                } else {
+                } else { 
                     mask = new Proxy(objScope, handler);
                 }
                 const flevaScriptString = `
@@ -1366,8 +1393,8 @@ const FlevaR = (function FlevaR() {
                 const { parse: $parse, stringify: $stringify } = JSON;
                 const { keys } = Object;
 
-                const Primitive = String;
-                const primitive = 'string';
+                const Primitive = String;   
+                const primitive = 'string'; 
 
                 const object = 'object';
 
@@ -1821,11 +1848,291 @@ const FlevaR = (function FlevaR() {
             return _returns_;
         })();
 
+
+
+
+        const VirtualCamera = function (_props) {
+            const props = { _x: 0, _y: 0, _width: _defaults.stage._width, _height: _defaults.stage._height, _rotation: 0, _anchorX: 0, _anchorY: 0, _xScale: 100, _yScale: 100 };
+
+            const bounds = { _x: props._x, _y: props._y, _width: props._width, height: props._height };
+
+            const pProps = { _x: 0, _y: 0, _width: _defaults.stage._width, _height: _defaults.stage._height, _rotation: 0, _anchorX: 0, _anchorY: 0, _xScale: 100, _yScale: 100 };
+
+
+            Object.defineProperties(props, {
+                _x: {
+                    get() { return pProps._x; },
+                    set(_val) {
+                        pProps._x = _val;
+                        _updateAttributes();
+                    },
+                    enumerable: true,
+                    configurable: false
+                },
+                _y: {
+                    get() { return pProps._y; },
+                    set(_val) {
+                        pProps._y = _val;
+                        _updateAttributes();
+                    },
+                    enumerable: true,
+                    configurable: false
+                },
+                _width: {
+                    get() { return pProps._width; },
+                    set(_val) {
+                        pProps._width = _val;
+                        _updateAttributes();
+                    },
+                    enumerable: true,
+                    configurable: false
+                },
+                _height: {
+                    get() { return pProps._height; },
+                    set(_val) {
+                        pProps._height = _val;
+                        _updateAttributes();
+                    },
+                    enumerable: true,
+                    configurable: false
+                },
+                _rotation: {
+                    get() { return pProps._rotation },
+                    set(_val) {
+                        if (typeof _val === "string" && /^\d+%$/.test(_val)) {
+                            pProps._rotation = (parseInt(_val) / 100 * 360);
+                        } else
+                            pProps._rotation = parseInt(_val);
+                        if (!numberUtils.inRange(pProps._rotation, -179, 180))
+                            pProps._rotation = numberUtils.wheelClamp(pProps._rotation, -180, 180);
+                        _updateAttributes();
+                    },
+                    enumerable: true,
+                    configurable: false
+                },
+                _anchorX: {
+                    get() { return pProps._anchorX },
+                    set(_val) {
+                        pProps._anchorX = numberUtils.lock(parseInt(_val), 0, 100);
+                        _updateAttributes();
+                    },
+                    enumerable: true,
+                    configurable: false
+                },
+                _anchorY: {
+                    get() { return pProps._anchorY },
+                    set(_val) {
+                        pProps._anchorY = numberUtils.lock(parseInt(_val), 0, 100);
+                        _updateAttributes();
+                    },
+                    enumerable: true,
+                    configurable: false
+                },
+                _xScale: {
+                    get() { return pProps._xScale; },
+                    set(_val) {
+                        pProps._xScale = _val;
+                        _updateAttributes();
+                    },
+                    enumerable: true,
+                    configurable: false
+                },
+                _yScale: {
+                    get() { return pProps._yScale; },
+                    set(_val) {
+                        pProps._yScale = _val;
+                        _updateAttributes();
+                    },
+                    enumerable: true,
+                    configurable: false
+                },
+            });
+
+
+            const ctx = _screen.ctx;
+            const _projectCamera = function () {
+                ctx.save();
+
+                const { _x = 0, _y = 0, _width = _defaults.stage._width, _height = _defaults.stage._height, _rotation, _anchorX, _anchorY, _xScale, _yScale } = props;
+
+                const anchorX = (_defaults.stage._width) * (_anchorX / 100);
+                const anchorY = (_defaults.stage._height) * (_anchorY / 100);
+                ctx.translate(anchorX, anchorY);
+
+                const width = _defaults.stage._width / _width;
+                const height = _defaults.stage._height / _height;
+                ctx.scale(width, height);
+
+                const xScale = 100 / _xScale;
+                const yScale = 100 / _yScale;
+                ctx.scale(xScale, yScale);
+
+                const rotation = numberUtils.degreesToRadians(_rotation);
+                ctx.rotate(-rotation);
+
+                const x = _x;
+                const y = _y;
+                ctx.translate(-x, -y);
+            }
+
+            const mapPointToStage = function(_point = {_x: 0, _y: 0}, _return) {
+                const { _x = 0, _y = 0, _width = _defaults.stage._width, _height = _defaults.stage._height, _rotation, _anchorX, _anchorY, _xScale, _yScale } = props;
+
+                let x = _point.x;
+                let y = _point.y;
+
+                const anchorX = (_defaults.stage._width) * (_anchorX / 100);
+                const anchorY = (_defaults.stage._height) * (_anchorY / 100);
+                x -= anchorX;
+                y -= anchorY;
+
+                const width = _defaults.stage._width / _width;
+                const height = _defaults.stage._height / _height;
+                x /= width;
+                y /= height;
+
+                const xScale = 100 / _xScale;
+                const yScale = 100 / _yScale;
+                x /= xScale;
+                y /= yScale;
+
+                let rP = numberUtils.rotatePoint(x, y, _rotation);
+                x = rP._x;
+                y = rP._y;
+
+                x += _x;
+                y += _y;
+
+                if(_return) {
+                    return { x, y };
+                } else {
+                    _point.x = x;
+                    _point.y = y;
+                }
+            }
+
+            const _setMouseStagePositions = function () {
+                const _pos = mapPointToStage({ x: MouseModule._private_._x, y: MouseModule._private_._y }, true);
+
+                                MouseModule._private_._stageX = _pos.x;
+                MouseModule._private_._stageY = _pos.y;
+            }
+
+            const _setBounds = function () {
+                const { _x, _y, _width, _height, _rotation, _anchorX: ax, _anchorY: ay, _xScale, _yScale } = props;
+                const offsetX = (ax * _width / 100);
+                const offsetY = (ay * _height / 100);
+                let fx = -offsetX, fy = -offsetY;
+                let fw = _width - offsetX, fh = _height - offsetY;
+
+                fx *= _xScale / 100;
+                fw *= _xScale / 100;
+                fy *= _yScale / 100;
+                fh *= _yScale / 100;
+
+                let topLeftRP;
+                let bottomLeftRP;
+                let topRightRP;
+                let bottomRightRP;
+
+                if (_rotation === 0) {
+                    topLeftRP = numberUtils.newPoint(fx, fy);
+                    bottomLeftRP = numberUtils.newPoint(fx, fh);
+                    topRightRP = numberUtils.newPoint(fw, fy);
+                    bottomRightRP = numberUtils.newPoint(fw, fh);
+                } else {
+                    topLeftRP = numberUtils.rotatePoint(fx, fy, _rotation);
+                    bottomLeftRP = numberUtils.rotatePoint(fx, fh, _rotation);
+                    topRightRP = numberUtils.rotatePoint(fw, fy, _rotation);
+                    bottomRightRP = numberUtils.rotatePoint(fw, fh, _rotation);
+                }
+
+                const minX = numberUtils.minMax("_x", "min", topLeftRP, topRightRP, bottomLeftRP, bottomRightRP);
+                const minY = numberUtils.minMax("_y", "min", topLeftRP, topRightRP, bottomLeftRP, bottomRightRP);
+                const maxX = numberUtils.minMax("_x", "max", topLeftRP, topRightRP, bottomLeftRP, bottomRightRP);
+                const maxY = numberUtils.minMax("_y", "max", topLeftRP, topRightRP, bottomLeftRP, bottomRightRP);
+
+                bounds._x = minX + _x;
+                bounds._y = minY + _y;
+                bounds._width = maxX - minX;
+                bounds._height = maxY - minY;
+            }
+
+            const _updateAttributes = function () {
+                _setMouseStagePositions();
+                _setBounds();
+            }
+
+            const _isInScreen = function (_bounds) {
+                return _commandUtils.boxHitTest(bounds, _bounds);
+            }
+
+            const _private_ = {
+                _projectCamera,
+                _setMouseStagePositions,
+                _setBounds,
+                _isInScreen
+            }
+
+            const _returns_ = new _constructors.VCam({
+                mapPointToStage
+            });
+            Object.defineProperties(_returns_, {
+                _private_: {
+                    get() { return _private_ },
+                    enumerable: false,
+                    configurable: false
+                },
+                _xmouse: {
+                    get() { return MouseModule._private_._x; },
+                    enumerable: true,
+                    configurable: false
+                },
+                _ymouse: {
+                    get() { return MouseModule._private_._y; },
+                    enumerable: true,
+                    configurable: false
+                },
+                _xmouseMov: {
+                    get() { return MouseModule._private_._movX; },
+                    enumerable: true,
+                    configurable: false
+                },
+                _ymouseMov: {
+                    get() { return MouseModule._private_._movY; },
+                    enumerable: true,
+                    configurable: false
+                }
+            });
+            for (let prop of Object.keys(props)) {
+                Object.defineProperty(_returns_, prop, {
+                    get() { return props[prop] },
+                    set() {
+                        const args = Array.prototype.slice.call(arguments); props[prop] = args[0];
+                    },
+                    enumerable: true,
+                    configurable: false
+                });
+            }
+
+            const _initFunc = function () {
+                if (_props) {
+                    if (!helperUtils.isObject(_props)) return;
+                    for (const _prop of Object.keys(_props))
+                        if (helperUtils.isDefined(props[_prop])) props[_prop] = _props[_prop];
+                }
+                _setBounds();
+            }
+            _initFunc();
+
+            return _returns_;
+        }
+
         const _Script = function (_definition = _defaults.emptyFunc) {
             DebugModule.typeCheck(_Script, "script definition", _definition, _constructors.Script, Function);
             _definition = _commandUtils.getScription(_definition);
             const _script = _definition;
-            Object.defineProperty(_script, 'constructor', { value: _constructors.Script });
+            Object.defineProperty(_script, 'constructor', { value: _constructors.Script }); 
             return _script;
         }
         const _Scene = function (_name, _inits) {
@@ -1905,7 +2212,7 @@ const FlevaR = (function FlevaR() {
                     DebugModule.bubbleError({ type: "Scene", from: "scene.changeState", error: bubbledError, src: functionLineNumber });
                 }
             }
-            const useState = (_state) => {
+            const useState = (_state) => { 
                 try {
                     DebugModule.typeCheck(useState, "state", _state, Object, Function, _constructors.Script);
                     if (helperUtils.isObject(_state)) {
@@ -1924,7 +2231,7 @@ const FlevaR = (function FlevaR() {
                     DebugModule.bubbleError({ type: "Scene", from: "scene.useState", error: bubbledError, src: DebugModule.getLineNumber(2) });
                 }
             }
-            const setState = (_state) => {
+            const setState = (_state) => { 
                 try {
                     DebugModule.typeCheck(setState, "state", _state, Object, Function, _constructors.Script);
                     if (helperUtils.isObject(_state)) {
@@ -2951,7 +3258,7 @@ const FlevaR = (function FlevaR() {
                     const wordWrap = __private.__wrap;
 
                     while (i < contents.length) {
-                        if (contents[i] !== " " && contents[i] !== newLineCode) {
+                        if (contents[i] !== " " && contents[i] !== newLineCode) { 
                             word += contents[i].substring(0, 1);
                             i++;
                         }
@@ -2960,7 +3267,7 @@ const FlevaR = (function FlevaR() {
                                 if (wordWrap === false) {
                                     if (!firstWord) {
                                         currentLine += word; word = "";
-                                    } else {
+                                    } else { 
                                         currentLine = word;
                                         firstWord = false;
                                         word = "";
@@ -2977,7 +3284,7 @@ const FlevaR = (function FlevaR() {
                                         } else {
                                             currentLine += word; word = "";
                                         }
-                                    } else {
+                                    } else { 
                                         if (measureText(word) < maxWidth) {
                                             currentLine = word;
                                             firstWord = false;
@@ -3000,7 +3307,7 @@ const FlevaR = (function FlevaR() {
                                     if (!firstWord) {
                                         currentLine += word + " "; word = "";
                                         i++;
-                                    } else {
+                                    } else { 
                                         currentLine = word + " ";
                                         firstWord = false;
                                         word = "";
@@ -3019,7 +3326,7 @@ const FlevaR = (function FlevaR() {
                                             currentLine += word + " "; word = "";
                                             i++;
                                         }
-                                    } else {
+                                    } else { 
                                         if (measureText(word) < maxWidth) {
                                             currentLine = word + " ";
                                             firstWord = false;
@@ -3036,12 +3343,12 @@ const FlevaR = (function FlevaR() {
                                         }
                                     }
                                 }
-                            } else {
+                            } else { 
                                 currentLine += " ";
                                 i++;
                                 firstWord = false;
                             }
-                        } else if (contents[i] === newLineCode) {
+                        } else if (contents[i] === newLineCode) { 
                             if (word !== "") {
                                 if (wordWrap === false) {
                                     if (!firstWord) {
@@ -3053,7 +3360,7 @@ const FlevaR = (function FlevaR() {
                                         firstWord = true;
                                         currentLine = "";
                                         i++;
-                                    } else {
+                                    } else { 
                                         currentLine = word;
                                         firstWord = false;
                                         word = "";
@@ -3083,7 +3390,7 @@ const FlevaR = (function FlevaR() {
                                             currentLine = "";
                                             i++;
                                         }
-                                    } else {
+                                    } else { 
                                         if (measureText(word) < maxWidth) {
                                             currentLine = word;
                                             firstWord = false;
@@ -3105,7 +3412,7 @@ const FlevaR = (function FlevaR() {
                                         }
                                     }
                                 }
-                            } else {
+                            } else { 
                                 lineBreaks.push(lineNumber);
                                 lines[lineNumber] = currentLine;
                                 lineNumber++;
@@ -3309,7 +3616,7 @@ const FlevaR = (function FlevaR() {
                             __private.__focused = __private.__hovered;
                         }
 
-                        const { _x: mouseX, _y: mouseY } = _commandUtils.getRotatedMappedPoint({ _x: MouseModule._private_._x, _y: MouseModule._private_._y }, _returns_);
+                        const { _x: mouseX, _y: mouseY } = _commandUtils.getRotatedMappedPoint({ _x: MouseModule._private_._stageX, _y: MouseModule._private_._stageY }, _returns_);
 
                         if (mouseEventType === "move") {
                             __private.__hovered = init.getParent()._hovered;
@@ -3958,11 +4265,11 @@ const FlevaR = (function FlevaR() {
                             let wbw = false;
                             const defaultAlignedOffset = meta.linesAligned[line];
 
-                            if (foundMin === undefined && ind + l >= meta.minSelectionPosition) {
+                            if (foundMin === undefined && ind + l >= meta.minSelectionPosition) { 
                                 wbw = true;
                                 foundMin = true;
                             }
-                            if (foundMin && ind + l >= meta.maxSelectionPosition) {
+                            if (foundMin && ind + l >= meta.maxSelectionPosition) { 
                                 wbw = true;
                                 foundMin = false;
                             }
@@ -4187,7 +4494,7 @@ const FlevaR = (function FlevaR() {
                     DebugModule.bubbleError({ type: "Textfield", from: "textfield.changeState", error: bubbledError, src: functionLineNumber });
                 }
             }
-            const useState = (_state) => {
+            const useState = (_state) => { 
                 try {
                     DebugModule.typeCheck(useState, "state", _state, Object, Function, _constructors.Script);
                     if (helperUtils.isObject(_state)) {
@@ -4206,7 +4513,7 @@ const FlevaR = (function FlevaR() {
                     DebugModule.bubbleError({ type: "Textfield", from: "textfield.useState", error: bubbledError, src: DebugModule.getLineNumber(2) });
                 }
             }
-            const setState = (_state) => {
+            const setState = (_state) => { 
                 try {
                     DebugModule.typeCheck(setState, "state", _state, Object, Function, _constructors.Script);
                     if (helperUtils.isObject(_state)) {
@@ -4385,7 +4692,7 @@ const FlevaR = (function FlevaR() {
             const stop = () => { }
 
             const isMouseInFlevaClip = () => {
-                const { _x, _y } = MouseModule._private_;
+                const { _stageX: _x, _stageY: _y } = MouseModule._private_;
                 if (!helperUtils.isNumber(_x) || !helperUtils.isNumber(_y)) return false;
                 return hitTestPoint(_x, _y, true);
             }
@@ -4540,8 +4847,8 @@ const FlevaR = (function FlevaR() {
 
             const _getBounds = function () {
                 const { _x, _y, _width, _height, _rotation, _anchorX: ax, _anchorY: ay } = props;
-                const offsetX = (ax / 100 * _width);
-                const offsetY = (ay / 100 * _height);
+                const offsetX = (ax * _width / 100);
+                const offsetY = (ay * _height / 100);
                 const fx = -offsetX, fy = -offsetY;
                 const fw = _width - offsetX, fh = _height - offsetY;
 
@@ -4598,7 +4905,7 @@ const FlevaR = (function FlevaR() {
                     DebugModule.bubbleError({ type: "Prefab", from: "prefab.changeState", error: bubbledError, src: functionLineNumber });
                 }
             }
-            const useState = (_state) => {
+            const useState = (_state) => { 
                 try {
                     DebugModule.typeCheck(useState, "state", _state, Object, Function, _constructors.Script);
                     if (helperUtils.isObject(_state)) {
@@ -4617,7 +4924,7 @@ const FlevaR = (function FlevaR() {
                     DebugModule.bubbleError({ type: "Prefab", from: "prefab.useState", error: bubbledError, src: DebugModule.getLineNumber(2) });
                 }
             }
-            const setState = (_state) => {
+            const setState = (_state) => { 
                 try {
                     DebugModule.typeCheck(setState, "state", _state, Object, Function, _constructors.Script);
                     if (helperUtils.isObject(_state)) {
@@ -4692,7 +4999,7 @@ const FlevaR = (function FlevaR() {
                     const sourceBounds = _getBounds();
                     return _commandUtils.boxHitTestPoint(sourceBounds, targetPoint);
                 } else if (isSprite || isSpriteSheet || isGraphic) {
-                    const visualSource = (isSprite || isGraphic) ? _heirarchy.visuals.src : _heirarchy.visuals.src[_spriteSheetFrameID];
+                    const visualSource = (isSprite || isGraphic) ? _heirarchy.visuals.src :_heirarchy.visuals.src[_spriteSheetFrameID];
                     const pixelMap = _commandUtils.getPixelMap(isGraphic ? _constructors.Graphic : _constructors.Sprite, visualSource);
                     const source = { ...sourceProps, pixelMap };
                     const rotatedPoint = _commandUtils.getRotatedMappedPoint(targetPoint, props);
@@ -4950,7 +5257,7 @@ const FlevaR = (function FlevaR() {
             }
 
             const isMouseInFlevaClip = () => {
-                const { _x, _y } = MouseModule._private_;
+                const { _stageX: _x, _stageY: _y } = MouseModule._private_;
                 if (!helperUtils.isNumber(_x) || !helperUtils.isNumber(_y)) return false;
                 return hitTestPoint(_x, _y, true);
             }
@@ -5053,7 +5360,7 @@ const FlevaR = (function FlevaR() {
 
             return _returns_;
         }
-        const _SpriteSheet = function (_name, { _width: w = _defaults.size, _height: h = _defaults.size, cut = false, props: allProps = [] } = {}, _allDefinitions = []) {
+        const _SpriteSheet = function (_name, { _width: w = _defaults.size, _height: h = _defaults.size, cut = false, props: allProps = [] } = {}, _allDefinitions = []) { 
             let _definitions, props;
             if (helperUtils.isArray(_allDefinitions)) _definitions = [..._allDefinitions];
             else _definitions = [_allDefinitions];
@@ -5131,7 +5438,7 @@ const FlevaR = (function FlevaR() {
                         if (helperUtils.isSpriteSheet(_definition)) {
                             try {
                                 let src;
-                                if (!_definition.assetSource)
+                                if (!_definition.assetSource) 
                                     src = getSpriteSheetFromLibrary(_definition.idName).assetSource;
                                 else
                                     src = _definition.assetSource;
@@ -5163,7 +5470,7 @@ const FlevaR = (function FlevaR() {
                             } else if (helperUtils.isGraphic(_definition)) {
                                 try {
                                     let src;
-                                    if (!_definition.assetSource)
+                                    if (!_definition.assetSource) 
                                         src = getGraphicFromLibrary(_definition.idName).assetSource;
                                     else
                                         src = _definition.assetSource;
@@ -5180,7 +5487,7 @@ const FlevaR = (function FlevaR() {
 
                                     gotSprite = true;
                                 } catch { }
-                            } else if (_commandUtils.isRawGraphic(_definition)) {
+                            } else if (_commandUtils.isRawGraphic(_definition)) { 
                                 try {
                                     const src = _definition;
                                     scanvas.width = sW;
@@ -5205,7 +5512,7 @@ const FlevaR = (function FlevaR() {
                             } else if (helperUtils.isSprite(_definition)) {
                                 try {
                                     let src;
-                                    if (!_definition.assetSource)
+                                    if (!_definition.assetSource) 
                                         src = getSpriteFromLibrary(_definition.idName).assetSource;
                                     else
                                         src = _definition.assetSource;
@@ -5220,7 +5527,7 @@ const FlevaR = (function FlevaR() {
                             } else if (helperUtils.isPainting(_definition)) {
                                 try {
                                     let src;
-                                    if (!_definition.assetSource)
+                                    if (!_definition.assetSource) 
                                         src = getPaintingFromLibrary(_definition.idName).assetSource;
                                     else
                                         src = _definition.assetSource;
@@ -5286,7 +5593,7 @@ const FlevaR = (function FlevaR() {
                     } else if (helperUtils.isGraphic(_definition)) {
                         try {
                             let src;
-                            if (!_definition.assetSource)
+                            if (!_definition.assetSource) 
                                 src = getGraphicFromLibrary(_definition.idName).assetSource;
                             else
                                 src = _definition.assetSource;
@@ -5300,7 +5607,7 @@ const FlevaR = (function FlevaR() {
 
                             gotSprite = true;
                         } catch { }
-                    } else if (_commandUtils.isRawGraphic(_definition)) {
+                    } else if (_commandUtils.isRawGraphic(_definition)) { 
                         try {
                             const src = _definition;
 
@@ -5321,7 +5628,7 @@ const FlevaR = (function FlevaR() {
                     } else if (helperUtils.isSprite(_definition)) {
                         try {
                             let src;
-                            if (!_definition.assetSource)
+                            if (!_definition.assetSource) 
                                 src = getSpriteFromLibrary(_definition.idName).assetSource;
                             else
                                 src = _definition.assetSource;
@@ -5334,7 +5641,7 @@ const FlevaR = (function FlevaR() {
                     } else if (helperUtils.isPainting(_definition)) {
                         try {
                             let src;
-                            if (!_definition.assetSource)
+                            if (!_definition.assetSource) 
                                 src = getPaintingFromLibrary(_definition.idName).assetSource;
                             else
                                 src = _definition.assetSource;
@@ -5663,13 +5970,19 @@ const FlevaR = (function FlevaR() {
 
             if (getCurrentSceneName() !== "")
                 await getCurrentScene()._private_._tick();
+
         }
+
+        const vcam = new VirtualCamera(defVCAM);
 
         const _renderEngine = function () {
             _screen.clearScreen();
 
             _screen.ctx.save();
             _screen.ctx.scale(_screen.xScale, _screen.yScale);
+
+            vcam._private_._projectCamera();
+
             if (getCurrentSceneName() !== "")
                 getCurrentScene()._private_._render();
 
@@ -5677,6 +5990,8 @@ const FlevaR = (function FlevaR() {
                 const flevaclip = mainStack.list[_name];
                 flevaclip.render();
             }
+
+            _screen.ctx.restore();
             _screen.ctx.restore();
 
             _screen._drawCursor();
@@ -5706,7 +6021,7 @@ const FlevaR = (function FlevaR() {
 
                 await _resolveBatch();
             } catch (bubbledError) {
-                MetaModule.setFullScreen(false);
+                MetaModule.setFullscreen(false);
                 DebugModule.bubbleError({ type: "Stage", from: "stage.onupdate", error: bubbledError }, true);
             }
         }
@@ -5868,7 +6183,7 @@ const FlevaR = (function FlevaR() {
                     let movementY = mouseY;
                     movementX += _movX;
                     movementY += _movY;
-                    if (_screen.lockPointer !== true) {
+                    if (_screen.lockPointer !== true) { 
                         if (movementX > _screen.canvas.width / _screen.xScale)
                             movementX = 0;
                         if (movementY > _screen.canvas.height / _screen.yScale)
@@ -5895,6 +6210,7 @@ const FlevaR = (function FlevaR() {
                 MouseModule._private_._movY = Math.ceil(_movY);
                 MouseModule._private_._x = numberUtils.lock(Math.ceil(mouseX), 0, _defaults.stage._width);
                 MouseModule._private_._y = numberUtils.lock(Math.ceil(mouseY), 0, _defaults.stage._height);
+                vcam._private_._setMouseStagePositions();
             },
             setMouseDown(_event) {
                 _events.setMousePosition(_event);
@@ -6085,8 +6401,8 @@ const FlevaR = (function FlevaR() {
             get version() { return _defaults.engine.version; },
             get loops() { return _loopManager.loops; },
             get FLEVAR_ENV() { return _defaults.flevar_env; },
-            get takeScreenShot() { return _screen.takeScreenShot.bind(_screen); },
-            get setFullScreen() { return _screen.setFullscreen.bind(_screen); },
+            get takeScreenshot() { return _screen.takeScreenshot.bind(_screen); },
+            get setFullscreen() { return _screen.setFullscreen.bind(_screen); },
             get FPS() { return __privateProperties.runitor.fps },
             get SPF() { return __privateProperties.runitor.spf },
         }
@@ -6163,6 +6479,7 @@ const FlevaR = (function FlevaR() {
             const _private_ = {
                 _x: null, _y: null,
                 _movX: 0, _movY: 0,
+                _stageX: null, _stageY: null,
                 _mouseList, _mousePressed, _mouseReleased,
 
                 _clearMouseStates() {
@@ -6381,7 +6698,7 @@ const FlevaR = (function FlevaR() {
                         assetSource.hasLoaded = "loading";
 
                         assetSource.onended = () => _onStop(_name);
-                        assetSource.oncanplaythrough = function () {
+                        assetSource.onloadeddata = function () {
                             if ([true, false].includes(assetSource.hasLoaded)) return;
                             assetSource.hasLoaded = true;
                             resolve();
@@ -6516,7 +6833,7 @@ const FlevaR = (function FlevaR() {
                         return _emitError(`Cannot play "${this._name}": ${e.msg || e}`, functionLineNumber, "playOnce");
                     }
                 }
-                playClone({ _volume } = {}) {
+                playClone({ _volume, onend } = {}) {
                     const functionLineNumber = DebugModule.getLineNumber(2);
                     try {
                         if (!this._src.hasLoaded) throw "Sound file not loaded.";
@@ -6526,7 +6843,9 @@ const FlevaR = (function FlevaR() {
                             assetSource.crossOrigin = "anonymous";
                             assetSource.preload = false;
                             assetSource.hasLoaded = undefined;
-                            assetSource.onended = function (name) {
+                            assetSource.onended = function () {
+                                if (_commandUtils.isScription(onend))
+                                    _commandUtils.getScription(onend)();
                                 assetSource.src = "";
                             }
                             assetSource.oncanplaythrough = async function () {
@@ -6606,7 +6925,7 @@ const FlevaR = (function FlevaR() {
                     return this._src.currentTime;
                 }
                 set _time(_value) {
-                    this._src.currentTime = value;
+                    this._src.currentTime = _value;
                 }
                 get _paused() {
                     return this._src.paused;
@@ -6693,8 +7012,8 @@ const FlevaR = (function FlevaR() {
         })();
         const SoundModule = SoundComponent.getSoundClip;
         SoundModule.type = helperUtils.typeOf(_constructors.Sound);
-        Object.defineProperty(SoundModule, 'constructor', { value: _constructors.Sound });
-        Object.defineProperty(SoundModule, '_volume', { get: SoundComponent.getVolume, set: SoundComponent.setVolume });
+        Object.defineProperty(SoundModule, 'constructor', { value: _constructors.Sound }); 
+        Object.defineProperty(SoundModule, '_volume', { get: SoundComponent.getVolume, set: SoundComponent.setVolume }); 
 
         const SharedObjectModule = (function SharedObjectModule() {
             const LS = "localstorage";
@@ -7055,16 +7374,10 @@ const FlevaR = (function FlevaR() {
                 return getCurrentScene();
             },
             get _xmouse() {
-                return MouseModule._private_._x;
+                return MouseModule._private_._stageX;
             },
             get _ymouse() {
-                return MouseModule._private_._y;
-            },
-            get _xmouseMov() {
-                return MouseModule._private_._movX;
-            },
-            get _ymouseMov() {
-                return MouseModule._private_._movY;
+                return MouseModule._private_._stageY;
             },
             get _color() {
                 return _defaults.stage._color;
@@ -7143,7 +7456,7 @@ const FlevaR = (function FlevaR() {
                 DebugModule.bubbleError({ type: "Stage", from: "stage.changeState", error: bubbledError, src: functionLineNumber });
             }
         }
-        const useState = (_state) => {
+        const useState = (_state) => { 
             try {
                 DebugModule.typeCheck(useState, "state", _state, Object, Function, _constructors.Script);
                 if (helperUtils.isObject(_state)) {
@@ -7162,7 +7475,7 @@ const FlevaR = (function FlevaR() {
                 DebugModule.bubbleError({ type: "Stage", from: "stage.useState", error: bubbledError, src: DebugModule.getLineNumber(2) });
             }
         }
-        const setState = (_state) => {
+        const setState = (_state) => { 
             try {
                 DebugModule.typeCheck(setState, "state", _state, Object, Function, _constructors.Script);
                 if (helperUtils.isObject(_state)) {
@@ -7192,7 +7505,7 @@ const FlevaR = (function FlevaR() {
                     script = _Script(_newScript);
                 }
                 const flevaScript = _commandUtils.createFlevaScript(script, _engineScope, _engineObj);
-                _heirarchy.scripts.push(flevaScript);
+                heirarchy.scripts.push(flevaScript);
             } catch (bubbledError) {
                 DebugModule.bubbleError({ type: "Stage", from: "stage.addScript", error: bubbledError, src: DebugModule.getLineNumber(2) });
             }
@@ -7642,7 +7955,7 @@ const FlevaR = (function FlevaR() {
                 } else if (helperUtils.isString(_name)) {
                     src = getSpriteFromLibrary(_name).assetSource;
                     name = _name;
-                } else if (!_name.assetSource) {
+                } else if (!_name.assetSource) { 
                     src = getSpriteFromLibrary(_name.idName).assetSource;
                     name = _name.idName;
                 } else {
@@ -7689,10 +8002,10 @@ const FlevaR = (function FlevaR() {
             Sound: SoundModule,
             SharedObject: SharedObjectModule,
 
-            utils: helperUtils,
+            utils: helperUtils, 
 
             _root,
-            state: engineState,
+            state: engineState, 
 
             changeState,
             useState,
@@ -7726,8 +8039,11 @@ const FlevaR = (function FlevaR() {
             getRawGraphic, getRawSprite,
 
 
+            VCam: vcam,
 
-            trace: (value) => DebugModule.trace(value, 1),
+
+
+            trace: (value) => DebugModule.trace(value, 1), 
 
             createLoop: (_func, _options, ..._args) => createLoop(false, _func, _options, ..._args),
             pauseLoop,
@@ -7736,7 +8052,7 @@ const FlevaR = (function FlevaR() {
             createTimeout,
             deleteTimeout,
 
-            sleep: blockRunTime,
+            sleep: blockRunTime, 
         });
 
         const _engineObj = _returns_;
@@ -7754,7 +8070,11 @@ const FlevaR = (function FlevaR() {
         _initFunc();
 
         const initLineNumber = DebugModule.getLineNumber(2);
-        startRunTime(_defaults.fps);
+        if (_options.useLoader)
+            window.addEventListener('load', () => startRunTime(_defaults.fps));
+        else
+            startRunTime(_defaults.fps);
+
         return _returns_;
     }
     function FlevaR_Editor(editMode, _div) {

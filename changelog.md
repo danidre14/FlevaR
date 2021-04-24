@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.1.1 (April 24, 2021)
+- Feature: Added Max Application Size to 2880 pixels.
+- Patch: Fixed bug that showed incorrect flevar version (`Meta.version`).
+
 ## 2.1.0 (April 21, 2021)
 - Feature: Added `VCam` (Virtual Camera) Module.
 - Enhancement: Modified `useLoader` option to only load engine when the page is fully loaded.

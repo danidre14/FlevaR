@@ -1,6 +1,6 @@
 const FlevaR = (function FlevaR() {
     "use strict";
-    return function (_div = document.body, { defVCAM, ..._options } = {}, _inits) {
+    return function (_div = document.body, _options = {}, _inits) {
         if (_options.constructor !== Object) {
             _inits = _options;
             _options = {};
@@ -11,6 +11,7 @@ const FlevaR = (function FlevaR() {
             const size = 100;
             const useFlevaScript = _options.useFlevaScript || false;
             const minStageWidth = 400, minStageHeight = 400;
+            const maxStageWidth = 2880, maxStageHeight = 2880;
             const editMode = _options.useEditor || false;
             const devMode = _options.dev || false;
             const autosave = _options.autosave || false;
@@ -65,14 +66,15 @@ const FlevaR = (function FlevaR() {
                     return canvas;
                 })(),
                 engine: {
-                    version: "FlevaR Version 2.0.0"
+                    version: "FlevaR Version 2.1.1"
                 },
                 stage: {
-                    _width: _options._width !== undefined ? Math.max(minStageWidth, _options._width) : 600,
-                    _height: _options._height !== undefined ? Math.max(minStageHeight, _options._height) : 500,
+                    _width: _options._width !== undefined ? Math.max(Math.min(_options._width, maxStageWidth), minStageWidth) : 600,
+                    _height: _options._height !== undefined ? Math.max(Math.min(_options._height, maxStageHeight), minStageHeight) : 500,
                     _color: "#fff0"
                 },
                 minStageWidth, minStageHeight,
+                maxStageWidth, maxStageHeight,
                 flevar_env: editMode ? "development" : "production",
                 editor: editMode,
                 devMode,
@@ -1856,7 +1858,7 @@ const FlevaR = (function FlevaR() {
 
             const bounds = { _x: props._x, _y: props._y, _width: props._width, height: props._height };
 
-            const pProps = { _x: 0, _y: 0, _width: _defaults.stage._width, _height: _defaults.stage._height, _rotation: 0, _anchorX: 0, _anchorY: 0, _xScale: 100, _yScale: 100 };
+            const pProps = { ...props };
 
 
             Object.defineProperties(props, {
@@ -5973,7 +5975,7 @@ const FlevaR = (function FlevaR() {
 
         }
 
-        const vcam = new VirtualCamera(defVCAM);
+        const vcam = new VirtualCamera();
 
         const _renderEngine = function () {
             _screen.clearScreen();

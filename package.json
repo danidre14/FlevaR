@@ -1,6 +1,6 @@
 {
   "name": "flevar",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "description": "FlevaR is a declarative JavaScript game engine for creating browser games and applications.",
   "main": "FlevaR.js",
   "repository": {

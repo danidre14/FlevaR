@@ -1,5 +1,17 @@
 # Changelog
 
+## 2.2.0 (August 27, 2021)
+- Feature: Added NeutralinoJS-based storage API for desktop flevar applications.
+- Feature: Added `graphicPath`, `graphicType`, `soundPath`, and `soundType` to engine initializations.
+- Feature: Added `addTextLns` method to `Textfield`s.
+- Feature: Added `FMath` utility function
+- Feature: Added `callScript` function.
+- Enhancement: Modified `Textfield` text methods to accept multiple parameters as additional strings.
+- Enhancement: Renamed `utils` utility function to `Utils`.
+- Modified: Flevaclip _alpha property now clamped to between 0 and 1.
+- Fixed: Flevaclip _alpha property rendering innacurately.
+- Fixed: Many bugs and errors.
+
 ## 2.1.1 (April 24, 2021)
 - Feature: Added Max Application Size to 2880 pixels.
 - Patch: Fixed bug that showed incorrect flevar version (`Meta.version`).

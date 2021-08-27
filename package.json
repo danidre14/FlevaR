@@ -1,7 +1,7 @@
 {
   "name": "flevar",
-  "version": "2.1.1",
-  "description": "FlevaR is a declarative JavaScript game engine for creating browser games and applications.",
+  "version": "2.2.0",
+  "description": "FlevaR is a declarative JavaScript game engine for creating 2D browser games and applications.",
   "main": "FlevaR.js",
   "repository": {
     "type": "git",
@@ -16,11 +16,12 @@
   "keywords": [
     "game",
     "engine",
+    "2D",
     "flevar",
     "javascript",
     "declarative"
   ],
-  "author": "Danidre (https://danidre.herokuapp.com)",
+  "author": "Danidre (https://danidre.com)",
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/danidre14/FlevaR/issues"

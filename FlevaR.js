@@ -9,7 +9,7 @@ const FlevaR = (function FlevaR() {
         const finis = [];
         const _defaults = (function () {
             const size = 100;
-            const useFlevaScript = _options.useFlevaScript || false;
+            const useFlevaScript = false;
             const minStageWidth = 400, minStageHeight = 400;
             const maxStageWidth = 2880, maxStageHeight = 2880;
             const editMode = _options.useEditor || false;
@@ -66,7 +66,7 @@ const FlevaR = (function FlevaR() {
                     return canvas;
                 })(),
                 engine: {
-                    version: "FlevaR Version 2.1.1"
+                    version: "FlevaR Version 2.2.0"
                 },
                 stage: {
                     _width: _options._width !== undefined ? Math.max(Math.min(_options._width, maxStageWidth), minStageWidth) : 600,
@@ -86,11 +86,11 @@ const FlevaR = (function FlevaR() {
                 emptyFunc() { },
 
 
-                graphicPath: "assets",
-                graphicType: "png",
+                graphicPath: _options.graphicPath !== undefined ? _options.graphicPath : "assets",
+                graphicType: _options.graphicType !== undefined ? _options.graphicType : "png",
 
-                soundPath: "assets",
-                soundType: "mp3",
+                soundPath: _options.soundPath !== undefined ? _options.soundPath : "assets",
+                soundType: _options.soundType !== undefined ? _options.soundType : "mp3",
 
                 autosave,
 
@@ -191,14 +191,14 @@ const FlevaR = (function FlevaR() {
             DEG2RAD: Math.PI / 180,
             RAD2DEG: 180 / Math.PI,
 
-            lerp: function (_value1, _value2, _amount, _lock = 0, _ceil) {
+            lerp: function (_value1, _value2, _amount, _clamp = 0, _ceil) {
                 _amount = _amount < 0 ? 0 : _amount;
                 _amount = _amount > 1 ? 1 : _amount;
 
                 const value = (1 - _amount) * _value1 + _amount * _value2;
-                if (!_lock) return _ceil ? Math.ceil(value) : value;
+                if (!_clamp) return _ceil ? Math.ceil(value) : value;
 
-                const val = (_value2 - value > -_lock && _value2 - value < _lock) ? _value2 : value;
+                const val = (_value2 - value > -_clamp && _value2 - value < _clamp) ? _value2 : value;
 
                 return _ceil ? Math.ceil(val) : val;
             },
@@ -222,7 +222,7 @@ const FlevaR = (function FlevaR() {
                 if (modNum > 0) return modNum + _min;
                 else return modNum + _max;
             },
-            lock(_num, _a, _b) {
+            clamp(_num, _a, _b) {
                 if (!helperUtils.isNumber(_num)) return 0;
                 if (!helperUtils.isNumber(_a)) return _num;
                 if (!helperUtils.isNumber(_b)) _b = _a;
@@ -253,7 +253,7 @@ const FlevaR = (function FlevaR() {
                 if (!helperUtils.isNumber(_num) || !helperUtils.isNumber(_max)) return 0;
                 if (!helperUtils.isNumber(_min)) _min = 0;
                 if (!helperUtils.isNumber(_inc)) _inc = 1;
-                _num = this.lock(_num, _min, _max);
+                _num = this.clamp(_num, _min, _max);
                 if (_num < _max) _num += _inc || 1;
                 else _num = _min;
                 return _num;
@@ -277,6 +277,12 @@ const FlevaR = (function FlevaR() {
 
                 return this.newPoint(rX, rY);
             },
+            degreesBetweenPoints(_point1, _point2) {
+                return Math.atan2(_point2._y - _point1._y, _point2._x - _point1._x) * this.RAD2DEG;
+            },
+            radiansBetweenPoints(_point1, _point2) {
+                return Math.atan2(_point2._y - _point1._y, _point2._x - _point1._x);
+            },
             newPoint(_objOrX = 0, _y = 0) {
                 if (typeof _objOrX === "object")
                     return { _x: _objOrX._x, _y: _objOrX._y };
@@ -292,8 +298,15 @@ const FlevaR = (function FlevaR() {
             },
             radiansToDegrees(_radians) {
                 return _radians * this.RAD2DEG;
+            },
+            validateInt(_int) {
+                return parseInt(_int) || 0;
+            },
+            validateFloat(_int) {
+                return parseFloat(_int) || 0;
             }
         }
+
         const objectUtils = {
             deepCloneObject: (function () {
                 const getOwnedKeys = () => {
@@ -339,7 +352,7 @@ const FlevaR = (function FlevaR() {
                 };
             }()),
             filterObject(_obj = {}, _string = "", _find = true) {
-                if (!this.isObject(_obj)) return;
+                if (!helperUtils.isObject(_obj)) return;
                 const keys = _string.split(" ");
                 const temp = {};
                 for (const key of Object.keys(_obj)) {
@@ -442,7 +455,7 @@ const FlevaR = (function FlevaR() {
                 return typeof _val === "string" || _val === String;
             },
             isNumber(_val) {
-                return typeof _val === "number" || _val === Number;
+                return (typeof _val === "number" && !Number.isNaN(_val)) || _val === Number;
             },
             isBigInt(_val) {
                 return typeof _val === "bigint" || _val === BigInt;
@@ -802,6 +815,13 @@ const FlevaR = (function FlevaR() {
                     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
                 },
 
+                fillScreen(_color = "black") {
+                    this.ctx.save();
+                    this.ctx.fillStyle = _color;
+                    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+                    this.ctx.restore();
+                },
+
 
                 takeScreenshot(_name) {
                     const name = _name ? _name : `${_defaults.applicationName}_${String(Date.now())}`;
@@ -854,7 +874,7 @@ const FlevaR = (function FlevaR() {
 
                         MouseModule._private_._x = _defaults.stage._width / 2;
                         MouseModule._private_._y = _defaults.stage._height / 2;
-                        vcam._private_._setMouseStagePositions();
+                        VCamModule._private_._setMouseStagePositions();
                     } catch { }
                 },
                 closePointerlock() {
@@ -868,7 +888,7 @@ const FlevaR = (function FlevaR() {
                     if (!(this._isPointerlock() && MouseModule._visible)) return;
                     const cursor = cursorTypes[MouseModule._private_._getCursorType()] || cursorTypes.default;
                     this.ctx.save();
-                    this.ctx.drawImage(cursor, (vcam._xmouse * this.xScale) - 32, (vcam._ymouse * this.yScale) - 32, 64, 64);
+                    this.ctx.drawImage(cursor, (VCamModule._xmouse * this.xScale) - 32, (VCamModule._ymouse * this.yScale) - 32, 64, 64);
                     this.ctx.restore();
                 },
 
@@ -921,13 +941,13 @@ const FlevaR = (function FlevaR() {
                 },
                 renderFlevaClipBounds({ _bounds, ..._props }) {
                     if (!__config.EDITOR.canRenderBounds) return;
-                    if (!vcam._private_._isInScreen(_bounds)) return;
+                    if (!VCamModule._private_._isInScreen(_bounds)) return;
 
                     __config.EDITOR.renderBoundedBox(this.ctx, _props, _bounds);
                     __config.EDITOR.renderRotatedBox(this.ctx, _props, this._setPosition.bind(this));
                 },
                 renderFlevaClip({ _bounds, _clip, ..._props }, _type, _parameters = []) {
-                    if (!vcam._private_._isInScreen(_bounds)) return;
+                    if (!VCamModule._private_._isInScreen(_bounds)) return;
                     if (!_props._visible) return;
                     const ctx = this.ctx;
                     const { _x = 0, _y = 0, _width = _defaults.size, _height = _defaults.size, _alpha } = _props;
@@ -1902,9 +1922,9 @@ const FlevaR = (function FlevaR() {
                     get() { return pProps._rotation },
                     set(_val) {
                         if (typeof _val === "string" && /^\d+%$/.test(_val)) {
-                            pProps._rotation = (parseInt(_val) / 100 * 360);
+                            pProps._rotation = (parseFloat(_val) / 100 * 360);
                         } else
-                            pProps._rotation = parseInt(_val);
+                            pProps._rotation = parseFloat(_val);
                         if (!numberUtils.inRange(pProps._rotation, -179, 180))
                             pProps._rotation = numberUtils.wheelClamp(pProps._rotation, -180, 180);
                         _updateAttributes();
@@ -1915,7 +1935,7 @@ const FlevaR = (function FlevaR() {
                 _anchorX: {
                     get() { return pProps._anchorX },
                     set(_val) {
-                        pProps._anchorX = numberUtils.lock(parseInt(_val), 0, 100);
+                        pProps._anchorX = numberUtils.clamp(parseFloat(_val), 0, 100);
                         _updateAttributes();
                     },
                     enumerable: true,
@@ -1924,7 +1944,7 @@ const FlevaR = (function FlevaR() {
                 _anchorY: {
                     get() { return pProps._anchorY },
                     set(_val) {
-                        pProps._anchorY = numberUtils.lock(parseInt(_val), 0, 100);
+                        pProps._anchorY = numberUtils.clamp(parseFloat(_val), 0, 100);
                         _updateAttributes();
                     },
                     enumerable: true,
@@ -1977,7 +1997,7 @@ const FlevaR = (function FlevaR() {
                 ctx.translate(-x, -y);
             }
 
-            const mapPointToStage = function(_point = {_x: 0, _y: 0}, _return) {
+            const mapPointToStage = function (_point = { _x: 0, _y: 0 }, _return) {
                 const { _x = 0, _y = 0, _width = _defaults.stage._width, _height = _defaults.stage._height, _rotation, _anchorX, _anchorY, _xScale, _yScale } = props;
 
                 let x = _point.x;
@@ -2005,7 +2025,7 @@ const FlevaR = (function FlevaR() {
                 x += _x;
                 y += _y;
 
-                if(_return) {
+                if (_return) {
                     return { x, y };
                 } else {
                     _point.x = x;
@@ -2016,7 +2036,7 @@ const FlevaR = (function FlevaR() {
             const _setMouseStagePositions = function () {
                 const _pos = mapPointToStage({ x: MouseModule._private_._x, y: MouseModule._private_._y }, true);
 
-                                MouseModule._private_._stageX = _pos.x;
+                MouseModule._private_._stageX = _pos.x;
                 MouseModule._private_._stageY = _pos.y;
             }
 
@@ -2719,15 +2739,15 @@ const FlevaR = (function FlevaR() {
             const args = Array.prototype.slice.call(arguments);
             const { div, ctx } = _screen;
             const init = {};
-            init.x = parseInt(_x);
-            init.y = parseInt(_y);
-            init.width = parseInt(_width);
-            init.height = parseInt(_height);
-            init.padding = parseInt(_padding);
-            init.fontSize = parseInt(_fontSize);
+            init.x = parseFloat(_x);
+            init.y = parseFloat(_y);
+            init.width = parseFloat(_width);
+            init.height = parseFloat(_height);
+            init.padding = parseFloat(_padding);
+            init.fontSize = parseFloat(_fontSize);
             init.fontColor = _fontColor;
             init.getParent = getParent;
-            init.lineHeight = parseInt(_lineHeight);
+            init.lineHeight = parseFloat(_lineHeight);
             init.type = ["dynamic", "input", "password"].includes(_type) ? _type : "dynamic";
             init.fontFamily = init.type === "password" ? "monospace" : _fontFamily;
             init.backgroundColor = _backgroundColor ? _backgroundColor : init.type === "dynamic" ? "none" : "white";
@@ -2802,7 +2822,7 @@ const FlevaR = (function FlevaR() {
                                 return __private.__size;
                             },
                             set(val) {
-                                val = Math.max(8, Math.min(parseInt(val), 80));
+                                val = Math.max(8, Math.min(parseFloat(val), 80));
                                 const prevSize = __private.__size;
                                 const prevLineheight = __private.__lineHeight;
                                 __private.__size = val;
@@ -2817,7 +2837,7 @@ const FlevaR = (function FlevaR() {
                                 return __private.__padding;
                             },
                             set(val) {
-                                __private.__padding = parseInt(val);
+                                __private.__padding = parseFloat(val);
                                 meta.getLinesFromContent();
                                 meta.getContentPositions();
                             },
@@ -2828,7 +2848,7 @@ const FlevaR = (function FlevaR() {
                                 return __private.__width;
                             },
                             set(val) {
-                                val = Math.max(2, parseInt(val));
+                                val = Math.max(2, parseFloat(val));
                                 __private.__width = val;
                                 meta.getLinesFromContent();
                                 meta.getContentPositions();
@@ -2840,7 +2860,7 @@ const FlevaR = (function FlevaR() {
                                 return __private.__height;
                             },
                             set(val) {
-                                val = Math.max(2, parseInt(val));
+                                val = Math.max(2, parseFloat(val));
                                 __private.__height = val;
                                 meta.getLinesFromContent();
                                 meta.getContentPositions();
@@ -2968,7 +2988,7 @@ const FlevaR = (function FlevaR() {
                                     return __private.__lineHeight;
                                 },
                                 set(val) {
-                                    __private.__lineHeight = Math.max(1, parseInt(val));
+                                    __private.__lineHeight = Math.max(1, parseFloat(val));
                                     meta.getLinesFromContent();
                                     meta.getContentPositions();
                                 },
@@ -4184,21 +4204,41 @@ const FlevaR = (function FlevaR() {
                 accessibles.getText = () => {
                     return accessibleMeta.getText();
                 }
-                accessibles.setText = (val) => {
-                    if (typeof val !== "string") return;
+                accessibles.setText = (...val) => {
+                    let text = [];
+                    for (const value of val) {
+                        if (typeof value !== "string" && typeof value !== "number") continue;
+                        text.push(value);
+                    }
                     accessibleMeta.clearText(false);
-                    accessibleMeta.appendText(val);
+                    accessibleMeta.appendText(text.join(" "));
                 }
                 accessibles.clearText = () => {
                     accessibleMeta.clearText();
                 }
-                accessibles.addText = (val) => {
-                    if (typeof val !== "string") return;
-                    accessibleMeta.appendText(val);
+                accessibles.addText = (...val) => {
+                    let text = [];
+                    for (const value of val) {
+                        if (typeof value !== "string" && typeof value !== "number") continue;
+                        text.push(value);
+                    }
+                    accessibleMeta.appendText(text.join(" "));
                 }
-                accessibles.addTextLn = (val) => {
-                    if (typeof val !== "string") return;
-                    accessibleMeta.appendText(val + "\n");
+                accessibles.addTextLn = (...val) => {
+                    let text = [];
+                    for (const value of val) {
+                        if (typeof value !== "string" && typeof value !== "number") continue;
+                        text.push(value);
+                    }
+                    accessibleMeta.appendText(text.join(" ") + "\n");
+                }
+                accessibles.addTextLns = (...val) => {
+                    let text = [];
+                    for (const value of val) {
+                        if (typeof value !== "string" && typeof value !== "number") continue;
+                        text.push(value);
+                    }
+                    accessibleMeta.appendText(text.join("\n") + "\n");
                 }
                 accessibles.removeTextLn = (num = 1) => {
                     if (typeof num !== "number") return;
@@ -4398,15 +4438,15 @@ const FlevaR = (function FlevaR() {
             const { props, _privateProps } = __Textfield(_props, () => _thisObj);
             let isLoaded = false;
 
-            let __rotation = 0, __anchorX = 0, __anchorY = 0;
+            let __rotation = 0, __anchorX = 0, __anchorY = 0, __alpha = 1;
             Object.defineProperties(props, {
                 _rotation: {
                     get() { return __rotation },
                     set(_val) {
                         if (typeof _val === "string" && /^\d+%$/.test(_val)) {
-                            __rotation = (parseInt(_val) / 100 * 360);
+                            __rotation = (parseFloat(_val) / 100 * 360);
                         } else
-                            __rotation = parseInt(_val);
+                            __rotation = parseFloat(_val);
                         if (!numberUtils.inRange(__rotation, -179, 180))
                             __rotation = numberUtils.wheelClamp(__rotation, -180, 180);
                     },
@@ -4416,7 +4456,7 @@ const FlevaR = (function FlevaR() {
                 _anchorX: {
                     get() { return __anchorX },
                     set(_val) {
-                        __anchorX = numberUtils.lock(parseInt(_val), 0, 100);
+                        __anchorX = numberUtils.clamp(parseFloat(_val), 0, 100);
                     },
                     enumerable: true,
                     configurable: false
@@ -4424,7 +4464,15 @@ const FlevaR = (function FlevaR() {
                 _anchorY: {
                     get() { return __anchorY },
                     set(_val) {
-                        __anchorY = numberUtils.lock(parseInt(_val), 0, 100);
+                        __anchorY = numberUtils.clamp(parseFloat(_val), 0, 100);
+                    },
+                    enumerable: true,
+                    configurable: false
+                },
+                _alpha: {
+                    get() { return __alpha },
+                    set(_val) {
+                        __alpha = numberUtils.clamp(parseFloat(_val), 0, 1);
                     },
                     enumerable: true,
                     configurable: false
@@ -4792,15 +4840,15 @@ const FlevaR = (function FlevaR() {
             let _stateChanged = false;
             let isLoaded = false;
 
-            let __rotation = 0, __anchorX = 0, __anchorY = 0;
+            let __rotation = 0, __anchorX = 0, __anchorY = 0, __alpha = 1;
             Object.defineProperties(props, {
                 _rotation: {
                     get() { return __rotation },
                     set(_val) {
                         if (typeof _val === "string" && /^\d+%$/.test(_val)) {
-                            __rotation = (parseInt(_val) / 100 * 360);
+                            __rotation = (parseFloat(_val) / 100 * 360);
                         } else
-                            __rotation = parseInt(_val);
+                            __rotation = parseFloat(_val);
                         if (!numberUtils.inRange(__rotation, -179, 180))
                             __rotation = numberUtils.wheelClamp(__rotation, -180, 180);
                     },
@@ -4810,7 +4858,7 @@ const FlevaR = (function FlevaR() {
                 _anchorX: {
                     get() { return __anchorX },
                     set(_val) {
-                        __anchorX = numberUtils.lock(parseInt(_val), 0, 100);
+                        __anchorX = numberUtils.clamp(parseFloat(_val), 0, 100);
                     },
                     enumerable: true,
                     configurable: false
@@ -4818,7 +4866,15 @@ const FlevaR = (function FlevaR() {
                 _anchorY: {
                     get() { return __anchorY },
                     set(_val) {
-                        __anchorY = numberUtils.lock(parseInt(_val), 0, 100);
+                        __anchorY = numberUtils.clamp(parseFloat(_val), 0, 100);
+                    },
+                    enumerable: true,
+                    configurable: false
+                },
+                _alpha: {
+                    get() { return __alpha },
+                    set(_val) {
+                        __alpha = numberUtils.clamp(parseFloat(_val), 0, 1);
                     },
                     enumerable: true,
                     configurable: false
@@ -5221,6 +5277,7 @@ const FlevaR = (function FlevaR() {
             }
 
             const tick = async () => {
+                if (_thisObj._hovered) MouseModule._private_._setCursorType("pointer");
                 for (const _name of Object.keys(_heirarchy.scripts)) {
                     const _script = _heirarchy.scripts[_name];
                     try {
@@ -5975,15 +6032,19 @@ const FlevaR = (function FlevaR() {
 
         }
 
-        const vcam = new VirtualCamera();
+        const VCamModule = new VirtualCamera();
 
         const _renderEngine = function () {
+            const renderBlack = (!VCamModule._width || !VCamModule._height || !VCamModule._xScale || !VCamModule._yScale);
+            if (renderBlack) {
+                _screen.fillScreen();
+            } else {
             _screen.clearScreen();
 
             _screen.ctx.save();
             _screen.ctx.scale(_screen.xScale, _screen.yScale);
 
-            vcam._private_._projectCamera();
+            VCamModule._private_._projectCamera();
 
             if (getCurrentSceneName() !== "")
                 getCurrentScene()._private_._render();
@@ -5995,6 +6056,7 @@ const FlevaR = (function FlevaR() {
 
             _screen.ctx.restore();
             _screen.ctx.restore();
+        }
 
             _screen._drawCursor();
         }
@@ -6210,9 +6272,9 @@ const FlevaR = (function FlevaR() {
                 }
                 MouseModule._private_._movX = Math.ceil(_movX);
                 MouseModule._private_._movY = Math.ceil(_movY);
-                MouseModule._private_._x = numberUtils.lock(Math.ceil(mouseX), 0, _defaults.stage._width);
-                MouseModule._private_._y = numberUtils.lock(Math.ceil(mouseY), 0, _defaults.stage._height);
-                vcam._private_._setMouseStagePositions();
+                MouseModule._private_._x = numberUtils.clamp(Math.ceil(mouseX), 0, _defaults.stage._width);
+                MouseModule._private_._y = numberUtils.clamp(Math.ceil(mouseY), 0, _defaults.stage._height);
+                VCamModule._private_._setMouseStagePositions();
             },
             setMouseDown(_event) {
                 _events.setMousePosition(_event);
@@ -6953,7 +7015,7 @@ const FlevaR = (function FlevaR() {
             }
 
             const _validateVolume = function (val) {
-                return numberUtils.lock(parseInt(val) || 0, 0, 100) / 100;
+                return numberUtils.clamp(parseInt(val) || 0, 0, 100) / 100;
             }
 
             const _validateSound = function (nameOrSound, ignoreLoaded) {
@@ -7020,8 +7082,11 @@ const FlevaR = (function FlevaR() {
         const SharedObjectModule = (function SharedObjectModule() {
             const LS = "localstorage";
             const IDB = "indexeddb";
+            const NEU = "neutralinostorage";
+            const Neu = window.Neutralino;
+            const hasNeu = !!Neu;
             const drivers = {};
-            const driver = (!window.indexedDB || _defaults.autosave) ? LS : IDB;
+            const driver = hasNeu ? NEU : ((!window.indexedDB || _defaults.autosave) ? LS : IDB);
 
             const signData = (data) => _commandUtils.flatted.stringify(data);
             const unsignData = (data) => _commandUtils.flatted.parse(data);
@@ -7058,11 +7123,11 @@ const FlevaR = (function FlevaR() {
 
             if (driver === LS)
                 window.addEventListener("beforeunload", flushObjects);
-            if (driver === IDB)
+            if (driver === IDB || driver === NEU)
                 window.addEventListener("beforeunload", promptSave);
 
             drivers[LS] = (function () {
-                const getLocal = function (_objectName) {
+                const getLocal = function (_objectName, _persist = true) {
                     return new Promise(async (resolve, reject) => {
                         if (!helperUtils.isString(_objectName)) return resolve(null);
                         const objectName = `flevar_ls_${_objectName}`;
@@ -7070,7 +7135,7 @@ const FlevaR = (function FlevaR() {
                         let flush;
                         let clear;
                         let getSize;
-                        if (persistedObjects[objectName]) {
+                        if (_persist && persistedObjects[objectName]) {
                             data = persistedObjects[objectName].data;
                             flush = persistedObjects[objectName].flush;
                             clear = persistedObjects[objectName].clear;
@@ -7110,7 +7175,7 @@ const FlevaR = (function FlevaR() {
                             }
                         }
 
-                        persistObject(objectName, data, flush, clear, getSize);
+                        _persist && persistObject(objectName, data, flush, clear, getSize);
 
                         const _returns_ = new _constructors.SharedObject();
                         Object.defineProperties(_returns_, {
@@ -7274,7 +7339,7 @@ const FlevaR = (function FlevaR() {
                         });
                     }
                 }
-                const getLocal = function (_objectName) {
+                const getLocal = function (_objectName, _persist = true) {
                     return new Promise(async (resolve, reject) => {
                         if (!helperUtils.isString(_objectName)) return resolve(null);
                         const objectName = `flevar_idb_${_objectName}`;
@@ -7282,7 +7347,7 @@ const FlevaR = (function FlevaR() {
                         let flush;
                         let clear;
                         let getSize;
-                        if (persistedObjects[objectName]) {
+                        if (_persist && persistedObjects[objectName]) {
                             data = persistedObjects[objectName].data;
                             flush = persistedObjects[objectName].flush;
                             clear = persistedObjects[objectName].clear;
@@ -7322,7 +7387,123 @@ const FlevaR = (function FlevaR() {
                             }
                         }
 
-                        persistObject(objectName, data, flush, clear, getSize);
+                        _persist && persistObject(objectName, data, flush, clear, getSize);
+
+                        const _returns_ = new _constructors.SharedObject();
+                        Object.defineProperties(_returns_, {
+                            data: {
+                                get() { return data },
+                                enumerable: true,
+                                configurable: false
+                            },
+                            flush: {
+                                get() { return flush },
+                                enumerable: false,
+                                configurable: false
+                            },
+                            clear: {
+                                get() { return clear },
+                                enumerable: false,
+                                configurable: false
+                            },
+                            getSize: {
+                                get() { return getSize },
+                                enumerable: false,
+                                configurable: false
+                            }
+                        });
+
+                        resolve(_returns_);
+                    });
+                }
+                return {
+                    getLocal
+                }
+            })();
+            drivers[NEU] = (function () {
+                const neuStorage = {
+                    DB_BUCKET_NAME: "neuStorage",
+                    getItem(key) {
+                        return new Promise(async (resolve) => {
+                            try {
+                                let response = await Neu.storage.getData({ bucket: `${neuStorage.DB_BUCKET_NAME}-${key}` });
+                                resolve(response.data);
+                            } catch (e) {
+                                resolve(null);
+                            }
+                        });
+                    },
+                    setItem(key, value) {
+                        return new Promise(async (resolve, reject) => {
+                            if (!value) return resolve(undefined);
+                            try {
+                                await Neu.storage.putData({ bucket: `${neuStorage.DB_BUCKET_NAME}-${key}`, data: String(value) });
+                                resolve();
+                            } catch (e) {
+                                reject(e);
+                            }
+                        });
+                    },
+                    removeItem(key) {
+                        return new Promise(async (resolve, reject) => {
+                            try {
+                                await Neu.storage.putData({ bucket: `${neuStorage.DB_BUCKET_NAME}-${key}`, data: null });
+                                resolve();
+                            } catch (e) {
+                                reject(e);
+                            }
+                        });
+                    }
+                }
+                const getLocal = function (_objectName, _persist = true) {
+                    return new Promise(async (resolve, reject) => {
+                        if (!helperUtils.isString(_objectName)) return resolve(null);
+                        const objectName = `flevar_neu_${_objectName}`;
+                        let data = {};
+                        let flush;
+                        let clear;
+                        let getSize;
+                        if (_persist && persistedObjects[objectName]) {
+                            data = persistedObjects[objectName].data;
+                            flush = persistedObjects[objectName].flush;
+                            clear = persistedObjects[objectName].clear;
+                            getSize = persistedObjects[objectName].getSize;
+                        } else {
+                            const value = await neuStorage.getItem(objectName);
+                            if (value) data = unsignData(value);
+
+                            flush = function () {
+                                return new Promise(async (resolve, reject) => {
+                                    try {
+                                        if (objectUtils.objectLength(data) > 0)
+                                            await neuStorage.setItem(objectName, signData(data));
+                                        else
+                                            await clear();
+                                        resolve(true);
+                                    } catch {
+                                        resolve(false);
+                                    }
+                                });
+                            }
+
+                            clear = function () {
+                                return new Promise(async (resolve, reject) => {
+                                    try {
+                                        objectUtils.emptyObject(data);
+                                        await neuStorage.removeItem(objectName);
+                                        resolve(true);
+                                    } catch {
+                                        resolve(false);
+                                    }
+                                });
+                            }
+
+                            getSize = function () {
+                                return new Blob([signData(data)]).size;
+                            }
+                        }
+
+                        _persist && persistObject(objectName, data, flush, clear, getSize);
 
                         const _returns_ = new _constructors.SharedObject();
                         Object.defineProperties(_returns_, {
@@ -7895,6 +8076,26 @@ const FlevaR = (function FlevaR() {
             }
         }
 
+
+                const callScript = async (_script, ..._parameters) => {
+            try {
+                DebugModule.typeCheck(callScript, "script", _script, String, Function, _constructors.Script);
+                let script;
+                if (helperUtils.isString(_script)) {
+                    const _newScript = getScriptFromLibrary(_script);
+                    script = _Script(_newScript);
+                } else if (_commandUtils.isScription(_script)) {
+                    const _newScript = _commandUtils.getScription(_script);
+                    script = _Script(_newScript);
+                }
+
+                const flevaScript = _commandUtils.createFlevaScript(script, _engineScope, _engineObj);
+                await flevaScript(..._parameters);
+            } catch (bubbledError) {
+                DebugModule.bubbleError({ type: "Stage", from: "callScript", error: bubbledError, src: DebugModule.getLineNumber(2) });
+            }
+        }
+
         const getScriptSignature = function (_name) {
             const signature = new _constructors.Script();
             signature.idName = _name;
@@ -7997,14 +8198,46 @@ const FlevaR = (function FlevaR() {
             _loopManager.removeTimeout(_id);
         }
 
+                const Utils = {
+            random: helperUtils.random,
+            emptyObject: objectUtils.emptyObject,
+            cloneObject: objectUtils.cloneObject,
+            multiplyObject: objectUtils.multiplyObject,
+            filterObject: objectUtils.filterObject,
+            objectLength: objectUtils.objectLength,
+            typeOf: helperUtils.typeOf,
+        }
+
+                const FMath = {
+            DEG2RAD: numberUtils.DEG2RAD,
+            RAD2DEG: numberUtils.RAD2DEG,
+            clamp: numberUtils.clamp,
+            wheelClamp: numberUtils.wheelClamp,
+            inRange: numberUtils.inRange,
+            eitherOr: numberUtils.eitherOr,
+            cycle: numberUtils.cycle,
+            perXSeconds: numberUtils.perXSeconds,
+            xPerSecond: numberUtils.xPerSecond,
+            degreesToRadians: numberUtils.degreesToRadians,
+            radiansToDegrees: numberUtils.radiansToDegrees,
+            degreesBetweenPoints: numberUtils.degreesBetweenPoints,
+            radiansBetweenPoints: numberUtils.radiansBetweenPoints,
+            newPoint: numberUtils.newPoint,
+            rotatePoint: numberUtils.rotatePoint,
+            validateInt: numberUtils.validateInt,
+            validateFloat: numberUtils.validateFloat,
+        }
+
         const _returns_ = new _constructors.Engine({
             Meta: MetaModule,
             Mouse: MouseModule,
             Key: KeyModule,
             Sound: SoundModule,
             SharedObject: SharedObjectModule,
+            VCam: VCamModule,
+            FMath,
+            Utils,
 
-            utils: helperUtils, 
 
             _root,
             state: engineState, 
@@ -8014,6 +8247,8 @@ const FlevaR = (function FlevaR() {
             setState,
 
             addScript,
+
+            callScript,
 
             useScene(_name) {
                 addToBatch(useScene, _name);
@@ -8041,7 +8276,6 @@ const FlevaR = (function FlevaR() {
             getRawGraphic, getRawSprite,
 
 
-            VCam: vcam,
 
 
 
@@ -8072,8 +8306,8 @@ const FlevaR = (function FlevaR() {
         _initFunc();
 
         const initLineNumber = DebugModule.getLineNumber(2);
-        if (_options.useLoader)
-            window.addEventListener('load', () => startRunTime(_defaults.fps));
+        if (_defaults.loadAssets)
+            window.addEventListener("load", () => startRunTime(_defaults.fps));
         else
             startRunTime(_defaults.fps);
 
